@@ -1,5 +1,5 @@
-use std::{fs::File, error::Error};
-use std::io::{BufReader, BufRead};
+use std::io::{BufRead, BufReader};
+use std::{error::Error, fs::File};
 
 type EasyResult<T> = Result<T, Box<dyn Error>>;
 
@@ -19,13 +19,13 @@ fn part1(file_name: &str) -> EasyResult<i32> {
     let mut increased_reading_count = 0;
     for reading in readings {
         if let Some(last) = last_reading {
-            if reading > last { 
+            if reading > last {
                 increased_reading_count += 1;
             }
         }
         last_reading = Some(reading);
     }
-    
+
     Ok(increased_reading_count)
 }
 
@@ -35,7 +35,7 @@ fn part2(file_name: &str) -> EasyResult<i32> {
     let mut last_reading = None;
     let mut increased_reading_count = 0;
     for i in 0..readings.len() - 2 {
-        let slice = &readings[i..i+3];
+        let slice = &readings[i..i + 3];
         let reading: i32 = slice.iter().sum();
         if let Some(last) = last_reading {
             if reading > last {
