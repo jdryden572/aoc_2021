@@ -6,13 +6,13 @@ fn main() {
     println!("Answer two: {}", answer_two);
 }
 
-fn part1(file_name: &str) -> i32 {
-    let initial_position = Position::default();
-
-    let final_position = helpers::read_lines_panicky(file_name)
+fn parse_commands(file_name: &'static str) -> impl Iterator<Item = Command> {
+    helpers::read_lines_panicky(file_name)
         .map(Command::parse)
-        .fold(initial_position, |pos, command| pos.handle(command));
-    
+}
+
+fn part1(file_name: &'static str) -> i32 {
+    let final_position = Position::calculate_final(parse_commands(file_name));
     final_position.horizontal * final_position.depth
 }
 
@@ -22,8 +22,8 @@ struct Position {
     depth: i32,
 }
 
-impl Position {
-    pub fn handle(self, command: Command) -> Self {
+impl CommandHandler for Position {
+    fn handle(self, command: Command) -> Self {
         match command {
             Command::Forward(dist) => Self { horizontal: self.horizontal + dist, depth: self.depth },
             Command::Down(dist) => Self { horizontal: self.horizontal, depth: self.depth + dist },
@@ -32,13 +32,8 @@ impl Position {
     }
 }
 
-fn part2(file_name: &str) -> i32 {
-    let initial_position = PositionWithAim::default();
-
-    let final_position = helpers::read_lines_panicky(file_name)
-        .map(Command::parse)
-        .fold(initial_position, |pos, command| pos.handle(command));
-    
+fn part2(file_name: &'static str) -> i32 {
+    let final_position = PositionWithAim::calculate_final(parse_commands(file_name));
     final_position.horizontal * final_position.depth
 }
 
@@ -50,14 +45,6 @@ struct PositionWithAim {
 }
 
 impl PositionWithAim {
-    pub fn handle(self, command: Command) -> Self {
-        match command {
-            Command::Forward(dist) => self.handle_forward(dist),
-            Command::Down(change) => self.change_aim(change),
-            Command::Up(change) => self.change_aim(-change),
-        }
-    }
-
     fn handle_forward(self, dist: i32) -> Self {
         let depth_change = self.aim * dist;
         Self { 
@@ -73,6 +60,25 @@ impl PositionWithAim {
             depth: self.depth, 
             aim: self.aim + change 
         }
+    }
+}
+
+impl CommandHandler for PositionWithAim {
+    fn handle(self, command: Command) -> Self {
+        match command {
+            Command::Forward(dist) => self.handle_forward(dist),
+            Command::Down(change) => self.change_aim(change),
+            Command::Up(change) => self.change_aim(-change),
+        }
+    }
+}
+
+trait CommandHandler where Self: Default {
+    fn handle(self, command: Command) -> Self;
+
+    fn calculate_final<I>(commands: I) -> Self where I: Iterator<Item = Command> {
+        let initial = Self::default();
+        commands.fold(initial, |pos, command| pos.handle(command))
     }
 }
 
