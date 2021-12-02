@@ -6,12 +6,14 @@ fn main() {
     println!("Answer two: {}", answer_two);
 }
 
-fn parse_commands(file_name: &'static str) -> impl Iterator<Item = Command> {
+fn parse_commands(file_name: &str) -> impl Iterator<Item = Command> + '_ {
     helpers::read_lines_panicky(file_name).map(Command::parse)
 }
 
-fn part1(file_name: &'static str) -> i32 {
-    let final_position = Position::calculate_final(parse_commands(file_name));
+fn part1(file_name: &str) -> i32 {
+    let initial = Position::default();
+    let commands = parse_commands(file_name);
+    let final_position = initial.apply_all_commands(commands);
     final_position.horizontal * final_position.depth
 }
 
@@ -40,8 +42,10 @@ impl CommandHandler for Position {
     }
 }
 
-fn part2(file_name: &'static str) -> i32 {
-    let final_position = PositionWithAim::calculate_final(parse_commands(file_name));
+fn part2(file_name: &str) -> i32 {
+    let initial = PositionWithAim::default();
+    let commands = parse_commands(file_name);
+    let final_position = initial.apply_all_commands(commands);
     final_position.horizontal * final_position.depth
 }
 
@@ -87,12 +91,11 @@ where
 {
     fn handle(self, command: Command) -> Self;
 
-    fn calculate_final<I>(commands: I) -> Self
+    fn apply_all_commands<I>(self, commands: I) -> Self
     where
         I: Iterator<Item = Command>,
     {
-        let initial = Self::default();
-        commands.fold(initial, |pos, command| pos.handle(command))
+        commands.fold(self, |pos, command| pos.handle(command))
     }
 }
 
