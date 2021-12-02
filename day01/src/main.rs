@@ -1,6 +1,3 @@
-use std::io::{BufRead, BufReader};
-use std::fs::File;
-
 fn main() {
     let answer = part1("input.txt");
     println!("{}", answer);
@@ -27,10 +24,7 @@ fn part2(file_name: &str) -> usize {
 }
 
 fn parse_ints_from_file(file_name: &str) -> Vec<i32> {
-    let file = File::open(file_name).unwrap();
-    BufReader::new(file)
-        .lines()
-        .map(Result::unwrap)
+    helpers::read_lines_panicky(file_name)
         .map(|l| l.parse().unwrap())
         .collect()
 }
