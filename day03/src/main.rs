@@ -7,28 +7,16 @@ fn main() {
 }
 
 fn part1(file_name: &str) -> u32 {
-    let lines = get_lines(file_name);
-    let num_bits = lines[0].len();
-    let readings = get_readings(lines);
+    let (readings, num_bits) = get_readings_and_num_bits(file_name);
 
     let mut gamma = 0;
     let mut epsilon = 0;
 
     for i in 0..num_bits {
-        let sum_at_digit = readings
-            .iter()
-            .map(|r| get_nth_digit(*r, i))
-            .sum::<u32>() as f64;
-        
-        let half_count = readings.len() as f64 / 2f64;
-        if sum_at_digit > half_count {
-            // 1 is most common digit
-            gamma |= 1 << i;
-        } else if sum_at_digit < half_count {
-            // 0 is most common digit
-            epsilon |= 1 << i;
-        } else {
-            panic!("Same number of 0s as 1s, the prompt didn't cover this, I'm fucking panicking");
+        match DigitInfo::from_bit_index(&readings, i) {
+            DigitInfo::MoreOnes => gamma |= 1 << i,
+            DigitInfo::MoreZeros => epsilon |= 1 << i,
+            DigitInfo::Same => panic!("Same number of 0s as 1s, the prompt didn't cover this, I'm fucking panicking"),
         }
     }
   
@@ -36,9 +24,7 @@ fn part1(file_name: &str) -> u32 {
 }
 
 fn part2(file_name: &str) -> u32 {
-    let lines = get_lines(file_name);
-    let num_bits = lines[0].len();
-    let readings = get_readings(lines);
+    let (readings, num_bits) = get_readings_and_num_bits(file_name);
 
     let oxygen = get_rating(readings.clone(), num_bits, true);
     let co2 = get_rating(readings, num_bits, false);
@@ -54,39 +40,59 @@ fn get_rating(mut readings: Vec<u32>, num_bits: usize, oxygen: bool) -> u32 {
         }
     }
 
+    assert_eq!(1, readings.len());
     readings[0]
 }
 
 fn filter_readings(readings: &[u32], bit: usize, oxygen: bool) -> Vec<u32> {
-    let sum = readings.iter().map(|r| get_nth_digit(*r, bit)).sum::<u32>() as f64;
-    let half_count = readings.len() as f64 / 2f64;
-    let more_ones = sum >= half_count;
+    let digit_info = DigitInfo::from_bit_index(readings, bit);
+    let more_ones = digit_info != DigitInfo::MoreZeros;
 
     readings
         .iter()
         // this may be the most evil line I've ever written
-        .filter(|&r| ((r & 1 << bit) > 0) ^ oxygen ^ more_ones)
+        .filter(|&r| (get_nth_digit(*r, bit) > 0) ^ oxygen ^ more_ones)
         .cloned()
         .collect()
 }
 
-fn get_lines(file_name: &str) -> Vec<String> {
-    helpers::read_lines_panicky(file_name).collect()
+#[derive(PartialEq)]
+enum DigitInfo {
+    MoreOnes,
+    MoreZeros,
+    Same
 }
 
-fn get_readings(lines: Vec<String>) -> Vec<u32> {
-    lines
+impl DigitInfo {
+    pub fn from_bit_index(readings: &[u32], bit: usize) -> Self {
+        let sum = readings
+            .iter()
+            .map(|r| get_nth_digit(*r, bit))
+            .sum::<u32>() as f64;
+
+        let half_count = readings.len() as f64 / 2f64;
+        if sum > half_count {
+            DigitInfo::MoreOnes
+        } else if sum < half_count {
+            DigitInfo::MoreZeros
+        } else {
+            DigitInfo::Same
+        }
+    }
+}
+
+fn get_readings_and_num_bits(file_name: &str) -> (Vec<u32>, usize) {
+    let lines: Vec<_> = helpers::read_lines_panicky(file_name).collect();
+    let readings = lines
         .iter()
         .map(|l| u32::from_str_radix(&l, 2).unwrap())
-        .collect()
+        .collect();
+
+    (readings, lines[0].len())
 }
 
 fn get_nth_digit(reading: u32, i: usize) -> u32 {
-    if (reading & 1 << i) > 0 {
-        1
-    } else {
-        0
-    }
+    reading >> i & 1
 }
 
 #[cfg(test)]
