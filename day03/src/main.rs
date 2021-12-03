@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 fn main() {
     let answer_one = part1("input.txt");
     println!("Answer one: {}", answer_one);
@@ -71,12 +73,11 @@ impl DigitInfo {
             .sum::<u32>() as f64;
 
         let half_count = readings.len() as f64 / 2f64;
-        if sum > half_count {
-            DigitInfo::MoreOnes
-        } else if sum < half_count {
-            DigitInfo::MoreZeros
-        } else {
-            DigitInfo::Same
+        match sum.partial_cmp(&half_count) {
+            Some(Ordering::Greater) => DigitInfo::MoreOnes,
+            Some(Ordering::Less) => DigitInfo::MoreZeros,
+            Some(Ordering::Equal) => DigitInfo::Same,
+            None => panic!("Oh shit, where'd the NaN come from?"),
         }
     }
 }
