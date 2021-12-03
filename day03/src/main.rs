@@ -18,10 +18,12 @@ fn part1(file_name: &str) -> u32 {
         match DigitInfo::from_bit_index(&readings, i) {
             DigitInfo::MoreOnes => gamma |= 1 << i,
             DigitInfo::MoreZeros => epsilon |= 1 << i,
-            DigitInfo::Same => panic!("Same number of 0s as 1s, the prompt didn't cover this, I'm fucking panicking"),
+            DigitInfo::Same => panic!(
+                "Same number of 0s as 1s, the prompt didn't cover this, I'm fucking panicking"
+            ),
         }
     }
-  
+
     gamma * epsilon
 }
 
@@ -62,17 +64,14 @@ fn filter_readings(readings: &[u32], bit: usize, oxygen: bool) -> Vec<u32> {
 enum DigitInfo {
     MoreOnes,
     MoreZeros,
-    Same
+    Same,
 }
 
 impl DigitInfo {
     pub fn from_bit_index(readings: &[u32], bit: usize) -> Self {
-        let sum = readings
-            .iter()
-            .map(|r| get_nth_digit(*r, bit))
-            .sum::<u32>() as f64;
-
+        let sum = readings.iter().map(|r| get_nth_digit(*r, bit)).sum::<u32>() as f64;
         let half_count = readings.len() as f64 / 2f64;
+        
         match sum.partial_cmp(&half_count) {
             Some(Ordering::Greater) => DigitInfo::MoreOnes,
             Some(Ordering::Less) => DigitInfo::MoreZeros,
