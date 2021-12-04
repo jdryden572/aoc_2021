@@ -65,6 +65,16 @@ struct Board {
 }
 
 impl Board {
+    fn new<I: Iterator<Item = i32>>(index: usize, mut numbers: I) -> Self {
+        let mut rows: [[Number; 5]; 5] = [[Number::Unmarked(0); 5]; 5];
+        for row in 0..5 {
+            for col in 0..5 {
+                rows[row][col] = numbers.next().unwrap().into();
+            }
+        }
+        Self { index, rows }
+    }
+
     fn mark(&mut self, number: i32) {
         for row in 0..5 {
             for col in 0..5 {
@@ -135,30 +145,24 @@ impl From<i32> for Number {
 }
 
 fn parse_boards(file_name: &str) -> Vec<Board> {
-    let mut boards = Vec::new();
-
     let lines: Vec<String> = helpers::read_lines_panicky(file_name)
         .skip(1)
         .filter(|l| !l.is_empty())
         .collect();
-    
-    let chunks = lines.chunks_exact(5);
-    for (index, chunk) in chunks.enumerate() {
-        let mut rows: [[Number; 5]; 5] = [[Number::Unmarked(0); 5]; 5];
-        for (i, row_str) in chunk.iter().enumerate() {
-            let mut nums = row_str.split_whitespace().map(|n| n.parse::<i32>().unwrap());
-            rows[i] = [
-                nums.next().unwrap().into(),
-                nums.next().unwrap().into(),
-                nums.next().unwrap().into(),
-                nums.next().unwrap().into(),
-                nums.next().unwrap().into(),
-            ];
-        }
-        boards.push(Board { index, rows });
-    }
-    
-    boards
+
+    lines
+        .chunks_exact(5)
+        .map(flatten_single_board)
+        .enumerate()
+        .map(|(i, nums)| Board::new(i, nums))
+        .collect()
+}
+
+fn flatten_single_board(chunk: &[String]) -> impl Iterator<Item = i32> + '_ {
+    chunk
+        .iter()
+        .map(|l| l.split_whitespace().map(|n| n.parse().unwrap()))
+        .flatten()
 }
 
 fn parse_called_numbers(file_name: &str) -> Vec<i32> {
