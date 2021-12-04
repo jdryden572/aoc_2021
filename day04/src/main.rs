@@ -26,7 +26,7 @@ fn part1(file_name: &str) -> i32 {
         }
     }
 
-    panic!("Didn't find a winner!")
+    panic!("Shit!")
 }
 
 fn part2(file_name: &str) -> i32 {
@@ -64,7 +64,7 @@ fn part2(file_name: &str) -> i32 {
         }
     }
 
-    panic!("Didn't find the last board to win!")
+    panic!("Shit!")
 }
 
 fn parse_boards(file_name: &str) -> Vec<Board> {
