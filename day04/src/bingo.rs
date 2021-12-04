@@ -6,7 +6,7 @@ pub struct Board {
 
 impl Board {
     pub fn new<I: Iterator<Item = i32>>(index: usize, mut numbers: I) -> Self {
-        let mut rows: [[Number; 5]; 5] = [[Number::Unmarked(0); 5]; 5];
+        let mut rows: [[Number; 5]; 5] = [[Number::default(); 5]; 5];
         for row in 0..5 {
             for col in 0..5 {
                 rows[row][col] = numbers.next().unwrap().into();
@@ -27,7 +27,7 @@ impl Board {
     }
 
     fn columns(&self) -> [[Number; 5]; 5] {
-        let mut columns = [[Number::Unmarked(0); 5]; 5];
+        let mut columns = [[Number::default(); 5]; 5];
         for row in 0..5 {
             for col in 0..5 {
                 columns[col][row] = self.rows[row][col];
@@ -75,15 +75,18 @@ enum Number {
 
 impl Number {
     fn is_marked(&self) -> bool {
-        match self {
-            Number::Marked(_) => true,
-            Number::Unmarked(_) => false,
-        }
+        matches!(self, Number::Marked(_))
     }
 }
 
 impl From<i32> for Number {
     fn from(n: i32) -> Self {
         Number::Unmarked(n)
+    }
+}
+
+impl Default for Number {
+    fn default() -> Self {
+        Number::Unmarked(0)
     }
 }
