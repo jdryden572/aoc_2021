@@ -30,7 +30,10 @@ fn part2(file_name: &str) -> i32 {
     let mut boards: VecDeque<Board> = parse_boards(file_name).into();
     let numbers = parse_called_numbers(file_name);
 
-    println!("Loaded {} boards, beginning search for worst board.", boards.len());
+    println!(
+        "Loaded {} boards, beginning search for worst board.",
+        boards.len()
+    );
 
     for number in numbers {
         println!("Calling: {}", number);
@@ -49,7 +52,10 @@ fn part2(file_name: &str) -> i32 {
             let board = boards.get_mut(0).unwrap();
             board.mark(number);
             if board.bingo() {
-                println!("Found the worst board! Board {} is the biggest stinker.", board.index);
+                println!(
+                    "Found the worst board! Board {} is the biggest stinker.",
+                    board.index
+                );
                 return board.unmarked_total() * number;
             }
         }
@@ -102,11 +108,15 @@ impl Board {
     }
 
     fn has_full_row(&self) -> bool {
-        self.rows.iter().any(|row| row.iter().all(Number::is_marked))
+        self.rows
+            .iter()
+            .any(|row| row.iter().all(Number::is_marked))
     }
 
     fn has_full_column(&self) -> bool {
-        self.columns().iter().any(|col| col.iter().all(Number::is_marked))
+        self.columns()
+            .iter()
+            .any(|col| col.iter().all(Number::is_marked))
     }
 
     fn unmarked_total(&self) -> i32 {
