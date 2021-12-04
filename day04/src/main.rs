@@ -9,8 +9,7 @@ fn main() {
 }
 
 fn part1(file_name: &str) -> i32 {
-    let mut boards = parse_boards(file_name);
-    let numbers = parse_called_numbers(file_name);
+    let (numbers, mut boards) = parse_numbers_and_boards(file_name);
 
     println!("Loaded {} boards, starting the game.", boards.len());
 
@@ -30,8 +29,8 @@ fn part1(file_name: &str) -> i32 {
 }
 
 fn part2(file_name: &str) -> i32 {
-    let mut boards: VecDeque<Board> = parse_boards(file_name).into();
-    let numbers = parse_called_numbers(file_name);
+    let (numbers, boards) = parse_numbers_and_boards(file_name);
+    let mut boards: VecDeque<_> = boards.into();
 
     println!(
         "Loaded {} boards, beginning search for worst board.",
@@ -67,9 +66,24 @@ fn part2(file_name: &str) -> i32 {
     panic!("Shit!")
 }
 
-fn parse_boards(file_name: &str) -> Vec<Board> {
-    let lines: Vec<String> = helpers::read_lines_panicky(file_name)
-        .skip(1)
+fn parse_numbers_and_boards(file_name: &str) -> (Vec<i32>, Vec<Board>) {
+    let mut lines = helpers::read_lines_panicky(file_name);
+    let numbers = parse_called_numbers(&mut lines);
+    let boards = parse_boards(lines);
+    (numbers, boards)
+}
+
+fn parse_called_numbers<I: Iterator<Item = String>>(lines: &mut I) -> Vec<i32> {
+    lines
+        .next()
+        .unwrap()
+        .split(",")
+        .map(|n| n.parse().unwrap())
+        .collect()
+}
+
+fn parse_boards<I: Iterator<Item = String>>(lines: I) -> Vec<Board> {
+    let lines: Vec<_> = lines
         .filter(|l| !l.is_empty())
         .collect();
 
@@ -86,15 +100,6 @@ fn flatten_single_board(chunk: &[String]) -> impl Iterator<Item = i32> + '_ {
         .iter()
         .map(|l| l.split_whitespace().map(|n| n.parse().unwrap()))
         .flatten()
-}
-
-fn parse_called_numbers(file_name: &str) -> Vec<i32> {
-    helpers::read_lines_panicky(file_name)
-        .next()
-        .unwrap()
-        .split(",")
-        .map(|n| n.parse().unwrap())
-        .collect()
 }
 
 #[cfg(test)]
