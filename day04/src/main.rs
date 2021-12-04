@@ -9,10 +9,15 @@ fn part1(file_name: &str) -> i32 {
     let mut boards = parse_boards(file_name);
     let numbers = parse_called_numbers(file_name);
 
+    println!("Loaded {} boards, starting the game.", boards.len());
+
     for number in numbers {
+        println!("Calling: {}", number);
+
         for board in boards.iter_mut() {
             board.mark(number);
             if board.bingo() {
+                println!("Bingo! Board {} has won!", board.index);
                 return board.unmarked_total() * number;
             }
         }
@@ -25,19 +30,26 @@ fn part2(file_name: &str) -> i32 {
     let mut boards: VecDeque<Board> = parse_boards(file_name).into();
     let numbers = parse_called_numbers(file_name);
 
+    println!("Loaded {} boards, beginning search for worst board.", boards.len());
+
     for number in numbers {
+        println!("Calling: {}", number);
+
         if boards.len() > 1 {
             for _ in 0..boards.len() {
                 let mut board = boards.pop_front().unwrap();
                 board.mark(number);
                 if !board.bingo() {
                     boards.push_back(board);
+                } else {
+                    println!("Removing board {}", board.index);
                 }
             }
         } else {
             let board = boards.get_mut(0).unwrap();
             board.mark(number);
             if board.bingo() {
+                println!("Found the worst board! Board {} is the biggest stinker.", board.index);
                 return board.unmarked_total() * number;
             }
         }
@@ -48,6 +60,7 @@ fn part2(file_name: &str) -> i32 {
 
 #[derive(Debug)]
 struct Board {
+    index: usize,
     rows: [[Number; 5]; 5],
 }
 
@@ -130,7 +143,7 @@ fn parse_boards(file_name: &str) -> Vec<Board> {
         .collect();
     
     let chunks = lines.chunks_exact(5);
-    for chunk in chunks {
+    for (index, chunk) in chunks.enumerate() {
         let mut rows: [[Number; 5]; 5] = [[Number::Unmarked(0); 5]; 5];
         for (i, row_str) in chunk.iter().enumerate() {
             let mut nums = row_str.split_whitespace().map(|n| n.parse::<i32>().unwrap());
@@ -142,7 +155,7 @@ fn parse_boards(file_name: &str) -> Vec<Board> {
                 nums.next().unwrap().into(),
             ];
         }
-        boards.push(Board { rows });
+        boards.push(Board { index, rows });
     }
     
     boards
