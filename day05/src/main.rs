@@ -1,4 +1,9 @@
-use std::{str::FromStr, num::ParseIntError, cmp::{max, min}, collections::HashMap};
+use std::{
+    cmp::{max, min},
+    collections::HashMap,
+    num::ParseIntError,
+    str::FromStr,
+};
 
 fn main() {
     println!("Answer one: {}", part1("input.txt"));
@@ -6,8 +11,7 @@ fn main() {
 }
 
 fn part1(file_name: &str) -> usize {
-    let lines = parse_lines(file_name)
-        .filter(|l| l.is_horizontal() || l.is_vertical());
+    let lines = parse_lines(file_name).filter(|l| l.is_horizontal() || l.is_vertical());
 
     count_most_dangerous_points(lines)
 }
@@ -30,8 +34,7 @@ fn count_most_dangerous_points<I: Iterator<Item = Line>>(lines: I) -> usize {
 }
 
 fn parse_lines(file_name: &str) -> impl Iterator<Item = Line> + '_ {
-    helpers::read_lines_panicky(file_name)
-        .map(|l| Line::from_str(&l).unwrap())
+    helpers::read_lines_panicky(file_name).map(|l| Line::from_str(&l).unwrap())
 }
 
 #[derive(Debug)]
@@ -52,10 +55,14 @@ impl Line {
     fn points_on_line(&self) -> Vec<Point> {
         if self.is_horizontal() {
             let (left, right) = self.left_to_right();
-            (left.x..right.x + 1).map(|x| Point { x, y: self.a.y }).collect()
+            (left.x..right.x + 1)
+                .map(|x| Point { x, y: self.a.y })
+                .collect()
         } else if self.is_vertical() {
             let (top, bottom) = self.top_to_bottom();
-            (top.y..bottom.y + 1).map(|y| Point { x: self.a.x, y }).collect()
+            (top.y..bottom.y + 1)
+                .map(|y| Point { x: self.a.x, y })
+                .collect()
         } else {
             self.points_on_diagonal()
         }
@@ -156,7 +163,10 @@ mod tests {
 
     #[test]
     fn points_on_diagonal() {
-        let line = Line { a: Point { x: 8, y: 0 }, b: Point { x: 0, y: 8 } };
+        let line = Line {
+            a: Point { x: 8, y: 0 },
+            b: Point { x: 0, y: 8 },
+        };
         let expected = vec![
             Point { x: 0, y: 8 },
             Point { x: 1, y: 7 },
