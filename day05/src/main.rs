@@ -2,6 +2,7 @@ use std::{str::FromStr, num::ParseIntError, cmp::{max, min}, collections::HashMa
 
 fn main() {
     println!("Answer one: {}", part1("input.txt"));
+    println!("Answer two: {}", part2("input.txt"));
 }
 
 fn part1(file_name: &str) -> usize {
@@ -9,6 +10,22 @@ fn part1(file_name: &str) -> usize {
         .filter(|l| l.is_horizontal() || l.is_vertical());
 
     let all_points = lines.map(|l| l.points_on_line()).flatten();
+
+    let mut point_counts = HashMap::new();
+    for point in all_points {
+        let count = point_counts.entry(point).or_insert(0);
+        *count += 1;
+    }
+
+    point_counts.values().filter(|&c| *c > 1).count()
+}
+
+fn part2(file_name: &str) -> usize {
+    let lines = parse_lines(file_name);
+
+    let all_points = lines
+        .map(|l| l.points_on_line())
+        .flatten();
 
     let mut point_counts = HashMap::new();
     for point in all_points {
@@ -58,8 +75,32 @@ impl Line {
     fn points_on_line(&self) -> Vec<Point> {
         if self.is_horizontal() {
             (self.min_x()..self.max_x() + 1).map(|x| Point { x, y: self.a.y }).collect()
-        } else {
+        } else if self.is_vertical() {
             (self.min_y()..self.max_y() + 1).map(|y| Point { x: self.a.x, y }).collect()
+        } else {
+            self.points_on_diagonal()
+        }
+    }
+
+    fn points_on_diagonal(&self) -> Vec<Point> {
+        if self.a.x == self.min_x() {
+            // Point A is left-most
+            if self.b.y == self.min_y() {
+                // Point B is top-most
+                (self.a.x..self.b.x + 1).zip((self.b.y..self.a.y + 1).rev()).map(Point::from).collect()
+            } else {
+                // Point A is top-most
+                (self.a.x..self.b.x + 1).zip(self.a.y..self.b.y + 1).map(Point::from).collect()
+            }
+        } else {
+            // Point B is left-most
+            if self.b.y == self.min_y() {
+                // Point B is top-most
+                (self.b.x..self.a.x + 1).zip(self.b.y..self.a.y + 1).map(Point::from).collect()
+            } else {
+                // Point A is top-most
+                (self.b.x..self.a.x + 1).zip((self.a.y..self.b.y + 1).rev()).map(Point::from).collect()
+            }
         }
     }
 }
@@ -110,5 +151,32 @@ mod tests {
     #[test]
     fn final_part1() {
         assert_eq!(7318, part1("input.txt"));
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(12, part2("test_input.txt"));
+    }
+
+    #[test]
+    fn final_part2() {
+        assert_eq!(19939, part2("input.txt"));
+    }
+
+    #[test]
+    fn points_on_diagonal() {
+        let line = Line { a: Point { x: 8, y: 0 }, b: Point { x: 0, y: 8 } };
+        let expected = vec![
+            Point { x: 0, y: 8 },
+            Point { x: 1, y: 7 },
+            Point { x: 2, y: 6 },
+            Point { x: 3, y: 5 },
+            Point { x: 4, y: 4 },
+            Point { x: 5, y: 3 },
+            Point { x: 6, y: 2 },
+            Point { x: 7, y: 1 },
+            Point { x: 8, y: 0 },
+        ];
+        assert_eq!(expected, line.points_on_line());
     }
 }
