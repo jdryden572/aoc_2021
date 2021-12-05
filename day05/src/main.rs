@@ -49,51 +49,49 @@ impl Line {
         self.a.x == self.b.x
     }
 
-    fn min_x(&self) -> i32 {
-        min(self.a.x, self.b.x)
-    }
-
-    fn max_x(&self) -> i32 {
-        max(self.a.x, self.b.x)
-    }
-
-    fn min_y(&self) -> i32 {
-        min(self.a.y, self.b.y)
-    }
-
-    fn max_y(&self) -> i32 {
-        max(self.a.y, self.b.y)
-    }
-
     fn points_on_line(&self) -> Vec<Point> {
         if self.is_horizontal() {
-            (self.min_x()..self.max_x() + 1).map(|x| Point { x, y: self.a.y }).collect()
+            let (left, right) = self.left_to_right();
+            (left.x..right.x + 1).map(|x| Point { x, y: self.a.y }).collect()
         } else if self.is_vertical() {
-            (self.min_y()..self.max_y() + 1).map(|y| Point { x: self.a.x, y }).collect()
+            let (top, bottom) = self.top_to_bottom();
+            (top.y..bottom.y + 1).map(|y| Point { x: self.a.x, y }).collect()
         } else {
             self.points_on_diagonal()
         }
     }
 
     fn points_on_diagonal(&self) -> Vec<Point> {
-        if self.a.x == self.min_x() {
-            // Point A is left-most
-            if self.b.y == self.min_y() {
-                // Point B is top-most
-                (self.a.x..self.b.x + 1).zip((self.b.y..self.a.y + 1).rev()).map(Point::from).collect()
-            } else {
-                // Point A is top-most
-                (self.a.x..self.b.x + 1).zip(self.a.y..self.b.y + 1).map(Point::from).collect()
-            }
+        let (left, right) = self.left_to_right();
+        let (top, bottom) = self.top_to_bottom();
+        if left == top {
+            // top-left to bottom-right
+            (left.x..right.x + 1)
+                .zip(top.y..bottom.y + 1)
+                .map(Point::from)
+                .collect()
         } else {
-            // Point B is left-most
-            if self.b.y == self.min_y() {
-                // Point B is top-most
-                (self.b.x..self.a.x + 1).zip(self.b.y..self.a.y + 1).map(Point::from).collect()
-            } else {
-                // Point A is top-most
-                (self.b.x..self.a.x + 1).zip((self.a.y..self.b.y + 1).rev()).map(Point::from).collect()
-            }
+            // bottom-left to top-right
+            (left.x..right.x + 1)
+                .zip((top.y..bottom.y + 1).rev())
+                .map(Point::from)
+                .collect()
+        }
+    }
+
+    fn left_to_right(&self) -> (Point, Point) {
+        if self.a.x <= self.b.x {
+            (self.a, self.b)
+        } else {
+            (self.b, self.a)
+        }
+    }
+
+    fn top_to_bottom(&self) -> (Point, Point) {
+        if self.a.y <= self.b.y {
+            (self.a, self.b)
+        } else {
+            (self.b, self.a)
         }
     }
 }
@@ -109,7 +107,7 @@ impl FromStr for Line {
     }
 }
 
-#[derive(Debug, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 struct Point {
     x: i32,
     y: i32,
