@@ -9,23 +9,16 @@ fn part1(file_name: &str) -> usize {
     let lines = parse_lines(file_name)
         .filter(|l| l.is_horizontal() || l.is_vertical());
 
-    let all_points = lines.map(|l| l.points_on_line()).flatten();
-
-    let mut point_counts = HashMap::new();
-    for point in all_points {
-        let count = point_counts.entry(point).or_insert(0);
-        *count += 1;
-    }
-
-    point_counts.values().filter(|&c| *c > 1).count()
+    count_most_dangerous_points(lines)
 }
 
 fn part2(file_name: &str) -> usize {
     let lines = parse_lines(file_name);
+    count_most_dangerous_points(lines)
+}
 
-    let all_points = lines
-        .map(|l| l.points_on_line())
-        .flatten();
+fn count_most_dangerous_points<I: Iterator<Item = Line>>(lines: I) -> usize {
+    let all_points = lines.map(|l| l.points_on_line()).flatten();
 
     let mut point_counts = HashMap::new();
     for point in all_points {
