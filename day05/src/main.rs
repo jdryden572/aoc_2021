@@ -20,7 +20,7 @@ fn part2(file_name: &str) -> usize {
 }
 
 fn count_most_dangerous_points<I: Iterator<Item = Line>>(lines: I) -> usize {
-    let all_points = lines.map(|l| l.points_on_line()).flatten();
+    let all_points = lines.flat_map(|l| l.points_on_line());
 
     let mut point_counts = HashMap::new();
     for point in all_points {
