@@ -1,14 +1,15 @@
 fn main() {
-    println!("Answer one: {}", part1("input.txt"));
+    println!("Answer one: {}", both_parts("input.txt", 80));
+    println!("Answer two: {}", both_parts("input.txt", 256));
 }
 
-fn part1(file_name: &str) -> usize {
+fn both_parts(file_name: &str, days: usize) -> usize {
     let mut population = Population::default();
     for fish in get_all_fish(file_name) {
         population.add(fish);
     }
 
-    for _ in 0..80 {
+    for _ in 0..days {
         population.simulate_day();
     }
 
@@ -51,11 +52,21 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(5934, part1("test_input.txt"));
+        assert_eq!(5934, both_parts("test_input.txt", 80));
     }
 
     #[test]
     fn final_part1() {
-        assert_eq!(350605, part1("input.txt"));
+        assert_eq!(350605, both_parts("input.txt", 80));
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(26984457539, both_parts("test_input.txt", 256));
+    }
+
+    #[test]
+    fn final_part2() {
+        assert_eq!(1592778185024, both_parts("input.txt", 256));
     }
 }
