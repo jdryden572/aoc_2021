@@ -13,7 +13,7 @@ fn part2(file_name: &str) -> i32 {
     get_crab_align_cost(file_name, |c| gauss_sum(c))
 }
 
-fn get_crab_align_cost<F: Fn(i32) -> i32>(file_name: &str, cost: F) -> i32 {
+fn get_crab_align_cost<F: Fn(i32) -> i32>(file_name: &str, cost_fn: F) -> i32 {
     let line = helpers::read_lines_panicky(file_name).next().unwrap();
     let crabs: Vec<i32> = line
         .split(",")
@@ -24,11 +24,22 @@ fn get_crab_align_cost<F: Fn(i32) -> i32>(file_name: &str, cost: F) -> i32 {
     let &max = crabs.iter().max().unwrap();
 
     let mut min_cost = i32::MAX;
-    for i in min..=max {
-        min_cost = cmp::min(min_cost, crabs.iter().map(|c| cost((c - i).abs())).sum());
+    for position in min..=max {
+        let cost_for_position = total_cost(&crabs, position, &cost_fn);
+        min_cost = cmp::min(min_cost, cost_for_position);
     }
 
     min_cost
+}
+
+fn total_cost<F: Fn(i32) -> i32>(crabs: &[i32], position: i32, cost_fn: &F) -> i32 {
+    crabs
+        .iter()
+        .map(|c| {
+            let distance = (c - position).abs();
+            cost_fn(distance)
+        })
+        .sum()
 }
 
 fn gauss_sum(n: i32) -> i32 {
