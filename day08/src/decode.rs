@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 /*
  AAAA
@@ -24,19 +24,19 @@ impl Decoder {
         let mut inputs: Vec<Vec<char>> = inputs.into_iter().map(|i| i.chars().collect()).collect();
         inputs.sort_by(|x, y| x.len().cmp(&y.len()));
 
-        let one = &inputs[0];
-        let seven = &inputs[1];
-        let four = &inputs[2];
-        let eight = &inputs[9];
+        let one = set(&inputs[0]);
+        let seven = set(&inputs[1]);
+        let four = set(&inputs[2]);
+        let eight = set(&inputs[9]);
 
-        let two_three_five = &inputs[3..6];
-        let zero_six_nine = &inputs[6..9];
+        let two_three_five = vec![set(&inputs[3]), set(&inputs[4]), set(&inputs[5])];
+        let zero_six_nine = vec![set(&inputs[6]), set(&inputs[7]), set(&inputs[8])];
 
         // Top segment is in 7, but not in 1
-        let &seg_a = seven.iter().find(|&c| !one.contains(c)).unwrap();
+        let &seg_a = seven.difference(&one).next().unwrap();
         mappings.insert(seg_a, 'a');
 
-        // Bottom segment is the only one (other than top) that is in all 6 unknown digits
+        // Bottom segment is the only one (other than top) that is in all of 0+2+3+5+6+9
         let combined = || two_three_five.iter().chain(zero_six_nine.iter());
         let &seg_g = eight
             .iter()
@@ -46,34 +46,31 @@ impl Decoder {
         mappings.insert(seg_g, 'g');
 
         // Segment F is the segment from 1 that is also in all three of 0+6+9
-        let &seg_f = one
-            .iter()
-            .filter(|&c| zero_six_nine.iter().filter(|d| d.contains(c)).count() == 3)
-            .next()
-            .unwrap();
+        let in_zero_six = set(zero_six_nine[0].intersection(&zero_six_nine[1]));
+        let in_all_three = set(in_zero_six.intersection(&zero_six_nine[2]));
+        let &seg_f = one.intersection(&in_all_three).next().unwrap();
         mappings.insert(seg_f, 'f');
 
         // Segment C is the other segment from 1
-        let &seg_c = one.iter().find(|&c| c != &seg_f).unwrap();
+        let &seg_c = one.difference(&set(&[seg_f])).next().unwrap();
         mappings.insert(seg_c, 'c');
 
         // Segment D is the only one (other than C) that is from 4 but only two of 0+6+9
-        let &seg_d = four
-            .iter()
-            .filter(|&c| c != &seg_c && zero_six_nine.iter().filter(|d| d.contains(c)).count() == 2)
+        let &seg_d = four.difference(&set(&[seg_c]))
+            .filter(|&c| zero_six_nine.iter().filter(|d| d.contains(c)).count() == 2)
             .next()
             .unwrap();
         mappings.insert(seg_d, 'd');
 
         // Segment B is the remaining unknown from 4
         let &seg_b = four
-            .iter()
-            .find(|&c| c != &seg_d && c != &seg_c && c != &seg_f)
+            .difference(&set(&[seg_c, seg_d, seg_f]))
+            .next()
             .unwrap();
         mappings.insert(seg_b, 'b');
 
         // Segment E is the last one, just find the one we don't have as a key yet
-        let &seg_e = eight.iter().find(|c| !mappings.contains_key(c)).unwrap();
+        let &seg_e = eight.difference(&set(mappings.keys())).next().unwrap();
         mappings.insert(seg_e, 'e');
 
         Self { mappings }
@@ -95,6 +92,10 @@ impl Decoder {
 
         panic!("Shit!");
     }
+}
+
+fn set<'a, I: IntoIterator<Item = &'a char>>(slice: I) -> HashSet<char> {
+    slice.into_iter().copied().collect()
 }
 
 #[cfg(test)]
