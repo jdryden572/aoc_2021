@@ -56,7 +56,8 @@ impl Decoder {
         mappings.insert(seg_c, 'c');
 
         // Segment D is the only one (other than C) that is from 4 but only two of 0+6+9
-        let &seg_d = four.difference(&set(&[seg_c]))
+        let &seg_d = four
+            .difference(&set(&[seg_c]))
             .filter(|&c| zero_six_nine.iter().filter(|d| d.contains(c)).count() == 2)
             .next()
             .unwrap();
@@ -84,13 +85,7 @@ impl Decoder {
         mapped.sort();
         let mapped = mapped.into_iter().collect::<String>();
 
-        for (i, &digit) in DIGITS.iter().enumerate() {
-            if digit == mapped {
-                return i;
-            }
-        }
-
-        panic!("Shit!");
+        DIGITS.iter().position(|&digit| digit == mapped).unwrap()
     }
 }
 
