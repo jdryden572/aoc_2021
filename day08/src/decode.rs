@@ -49,17 +49,25 @@ impl Decoder {
 
         let two_three_five = &inputs[3..6];
         let zero_six_nine = &inputs[6..9];
-        
+
         let &seg_a = seven.iter().filter(|c| !one.contains(*c)).next().unwrap();
         //println!("'{}' = SegA", seg_a);
         mappings.insert(seg_a, Seg::A);
 
         let combined = || two_three_five.iter().chain(zero_six_nine.iter());
-        let &seg_g = eight.iter().filter(|&c| c != &seg_a && combined().filter(|d| d.contains(c)).count() == 6).next().unwrap();
+        let &seg_g = eight
+            .iter()
+            .filter(|&c| c != &seg_a && combined().filter(|d| d.contains(c)).count() == 6)
+            .next()
+            .unwrap();
         //println!("'{}' = SegG", seg_g);
         mappings.insert(seg_g, Seg::G);
 
-        let &seg_f = one.iter().filter(|&c| zero_six_nine.iter().filter(|d| d.contains(c)).count() == 3).next().unwrap();
+        let &seg_f = one
+            .iter()
+            .filter(|&c| zero_six_nine.iter().filter(|d| d.contains(c)).count() == 3)
+            .next()
+            .unwrap();
         //println!("'{}' = SegF", seg_f);
         mappings.insert(seg_f, Seg::F);
 
@@ -67,15 +75,27 @@ impl Decoder {
         //println!("'{}' = SegC", seg_c);
         mappings.insert(seg_c, Seg::C);
 
-        let &seg_d = four.iter().filter(|&c| c != &seg_c && zero_six_nine.iter().filter(|d| d.contains(c)).count() == 2).next().unwrap();
+        let &seg_d = four
+            .iter()
+            .filter(|&c| c != &seg_c && zero_six_nine.iter().filter(|d| d.contains(c)).count() == 2)
+            .next()
+            .unwrap();
         //println!("'{}' = SegD", seg_d);
         mappings.insert(seg_d, Seg::D);
 
-        let &seg_b = four.iter().filter(|&c| c != &seg_d && c != &seg_c && c != &seg_f).next().unwrap();
+        let &seg_b = four
+            .iter()
+            .filter(|&c| c != &seg_d && c != &seg_c && c != &seg_f)
+            .next()
+            .unwrap();
         //println!("'{}' = SegB", seg_b);
         mappings.insert(seg_b, Seg::B);
 
-        let &seg_e = eight.iter().filter(|c| !mappings.contains_key(c)).next().unwrap();
+        let &seg_e = eight
+            .iter()
+            .filter(|c| !mappings.contains_key(c))
+            .next()
+            .unwrap();
         //println!("'{}' = SegE", seg_e);
         mappings.insert(seg_e, Seg::E);
 
@@ -83,7 +103,10 @@ impl Decoder {
     }
 
     pub fn decode(&self, input: &str) -> usize {
-        let mut mapped = input.chars().map(|c| self.mappings.get(&c).copied().unwrap()).collect::<Vec<_>>();
+        let mut mapped = input
+            .chars()
+            .map(|c| self.mappings.get(&c).copied().unwrap())
+            .collect::<Vec<_>>();
         mapped.sort();
 
         match mapped.len() {
@@ -98,7 +121,7 @@ impl Decoder {
                 } else {
                     5
                 }
-            },
+            }
             6 => {
                 if &mapped == N_0 {
                     0
@@ -107,9 +130,9 @@ impl Decoder {
                 } else {
                     9
                 }
-            },
+            }
             7 => 8,
-            _ => panic!("Shit!")
+            _ => panic!("Shit!"),
         }
     }
 }
@@ -120,7 +143,12 @@ mod tests {
 
     #[test]
     fn test_build() {
-        let inputs: Vec<String> = vec!["acedgfb", "cdfbe", "gcdfa", "fbcad", "dab", "cefabd", "cdfgeb", "eafb", "cagedb", "ab"].into_iter().map(String::from).collect();
+        let inputs: Vec<String> = vec![
+            "acedgfb", "cdfbe", "gcdfa", "fbcad", "dab", "cefabd", "cdfgeb", "eafb", "cagedb", "ab",
+        ]
+        .into_iter()
+        .map(String::from)
+        .collect();
         let mut mappings = HashMap::new();
         mappings.insert('a', Seg::C);
         mappings.insert('b', Seg::F);

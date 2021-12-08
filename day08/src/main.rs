@@ -22,8 +22,18 @@ fn part2(file_name: &str) -> usize {
     let mut num = 0;
     for line in helpers::read_lines_panicky(file_name) {
         let mut split = line.split("|");
-        let inputs = split.next().unwrap().split_whitespace().map(String::from).collect::<Vec<_>>();
-        let readings = split.next().unwrap().split_whitespace().map(String::from).collect::<Vec<_>>();
+        let inputs = split
+            .next()
+            .unwrap()
+            .split_whitespace()
+            .map(String::from)
+            .collect::<Vec<_>>();
+        let readings = split
+            .next()
+            .unwrap()
+            .split_whitespace()
+            .map(String::from)
+            .collect::<Vec<_>>();
 
         let decoder = Decoder::build(inputs);
         for i in 0..4 {
