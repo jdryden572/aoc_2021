@@ -1,4 +1,3 @@
-use core::panic;
 use std::collections::HashMap;
 
 /*
@@ -10,30 +9,13 @@ E    F
 E    F
  GGGG
 */
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
-enum Seg {
-    A,
-    B,
-    C,
-    D,
-    E,
-    F,
-    G,
-}
 
-static N_0: &[Seg] = &[Seg::A, Seg::B, Seg::C, Seg::E, Seg::F, Seg::G];
-//static N_1: &[Seg] = &[Seg::C, Seg::F];
-static N_2: &[Seg] = &[Seg::A, Seg::C, Seg::D, Seg::E, Seg::G];
-static N_3: &[Seg] = &[Seg::A, Seg::C, Seg::D, Seg::F, Seg::G];
-//static N_4: &[Seg] = &[Seg::B, Seg::C, Seg::D, Seg::F];
-//static N_5: &[Seg] = &[Seg::A, Seg::B, Seg::D, Seg::F, Seg::G];
-static N_6: &[Seg] = &[Seg::A, Seg::B, Seg::D, Seg::E, Seg::F, Seg::G];
-//static N_7: &[Seg] = &[Seg::A, Seg::C, Seg::F];
-//static N_8: &[Seg] = &[Seg::A, Seg::B, Seg::C, Seg::D, Seg::E, Seg::F, Seg::G];
-//static N_9: &[Seg] = &[Seg::A, Seg::B, Seg::C, Seg::D, Seg::F, Seg::G];
+static DIGITS: &[&str] = &[
+    "abcefg", "cf", "acdeg", "acdfg", "bcdf", "abdfg", "abdefg", "acf", "abcdefg", "abcdfg",
+];
 
 pub struct Decoder {
-    mappings: HashMap<char, Seg>,
+    mappings: HashMap<char, char>,
 }
 
 impl Decoder {
@@ -50,54 +32,49 @@ impl Decoder {
         let two_three_five = &inputs[3..6];
         let zero_six_nine = &inputs[6..9];
 
-        let &seg_a = seven.iter().filter(|c| !one.contains(*c)).next().unwrap();
-        //println!("'{}' = SegA", seg_a);
-        mappings.insert(seg_a, Seg::A);
+        // Top segment is in 7, but not in 1
+        let &seg_a = seven.iter().find(|&c| !one.contains(c)).unwrap();
+        mappings.insert(seg_a, 'a');
 
+        // Bottom segment is the only one (other than top) that is in all 6 unknown digits
         let combined = || two_three_five.iter().chain(zero_six_nine.iter());
         let &seg_g = eight
             .iter()
             .filter(|&c| c != &seg_a && combined().filter(|d| d.contains(c)).count() == 6)
             .next()
             .unwrap();
-        //println!("'{}' = SegG", seg_g);
-        mappings.insert(seg_g, Seg::G);
+        mappings.insert(seg_g, 'g');
 
+        // Segment F is the segment from 1 that is also in all three of 0+6+9
         let &seg_f = one
             .iter()
             .filter(|&c| zero_six_nine.iter().filter(|d| d.contains(c)).count() == 3)
             .next()
             .unwrap();
-        //println!("'{}' = SegF", seg_f);
-        mappings.insert(seg_f, Seg::F);
+        mappings.insert(seg_f, 'f');
 
-        let &seg_c = one.iter().filter(|&c| c != &seg_f).next().unwrap();
-        //println!("'{}' = SegC", seg_c);
-        mappings.insert(seg_c, Seg::C);
+        // Segment C is the other segment from 1
+        let &seg_c = one.iter().find(|&c| c != &seg_f).unwrap();
+        mappings.insert(seg_c, 'c');
 
+        // Segment D is the only one (other than C) that is from 4 but only two of 0+6+9
         let &seg_d = four
             .iter()
             .filter(|&c| c != &seg_c && zero_six_nine.iter().filter(|d| d.contains(c)).count() == 2)
             .next()
             .unwrap();
-        //println!("'{}' = SegD", seg_d);
-        mappings.insert(seg_d, Seg::D);
+        mappings.insert(seg_d, 'd');
 
+        // Segment B is the remaining unknown from 4
         let &seg_b = four
             .iter()
-            .filter(|&c| c != &seg_d && c != &seg_c && c != &seg_f)
-            .next()
+            .find(|&c| c != &seg_d && c != &seg_c && c != &seg_f)
             .unwrap();
-        //println!("'{}' = SegB", seg_b);
-        mappings.insert(seg_b, Seg::B);
+        mappings.insert(seg_b, 'b');
 
-        let &seg_e = eight
-            .iter()
-            .filter(|c| !mappings.contains_key(c))
-            .next()
-            .unwrap();
-        //println!("'{}' = SegE", seg_e);
-        mappings.insert(seg_e, Seg::E);
+        // Segment E is the last one, just find the one we don't have as a key yet
+        let &seg_e = eight.iter().find(|c| !mappings.contains_key(c)).unwrap();
+        mappings.insert(seg_e, 'e');
 
         Self { mappings }
     }
@@ -106,34 +83,17 @@ impl Decoder {
         let mut mapped = input
             .chars()
             .map(|c| self.mappings.get(&c).copied().unwrap())
-            .collect::<Vec<_>>();
+            .collect::<Vec<char>>();
         mapped.sort();
+        let mapped = mapped.into_iter().collect::<String>();
 
-        match mapped.len() {
-            2 => 1,
-            3 => 7,
-            4 => 4,
-            5 => {
-                if &mapped == N_2 {
-                    2
-                } else if &mapped == N_3 {
-                    3
-                } else {
-                    5
-                }
+        for (i, &digit) in DIGITS.iter().enumerate() {
+            if digit == mapped {
+                return i;
             }
-            6 => {
-                if &mapped == N_0 {
-                    0
-                } else if &mapped == N_6 {
-                    6
-                } else {
-                    9
-                }
-            }
-            7 => 8,
-            _ => panic!("Shit!"),
         }
+
+        panic!("Shit!");
     }
 }
 
@@ -150,26 +110,26 @@ mod tests {
         .map(String::from)
         .collect();
         let mut mappings = HashMap::new();
-        mappings.insert('a', Seg::C);
-        mappings.insert('b', Seg::F);
-        mappings.insert('c', Seg::G);
-        mappings.insert('d', Seg::A);
-        mappings.insert('e', Seg::B);
-        mappings.insert('f', Seg::D);
-        mappings.insert('g', Seg::E);
+        mappings.insert('a', 'c');
+        mappings.insert('b', 'f');
+        mappings.insert('c', 'g');
+        mappings.insert('d', 'a');
+        mappings.insert('e', 'b');
+        mappings.insert('f', 'd');
+        mappings.insert('g', 'e');
         assert_eq!(mappings, Decoder::build(inputs).mappings);
     }
 
     #[test]
     fn test_decode() {
         let mut mappings = HashMap::new();
-        mappings.insert('a', Seg::C);
-        mappings.insert('b', Seg::F);
-        mappings.insert('c', Seg::G);
-        mappings.insert('d', Seg::A);
-        mappings.insert('e', Seg::B);
-        mappings.insert('f', Seg::D);
-        mappings.insert('g', Seg::E);
+        mappings.insert('a', 'c');
+        mappings.insert('b', 'f');
+        mappings.insert('c', 'g');
+        mappings.insert('d', 'a');
+        mappings.insert('e', 'b');
+        mappings.insert('f', 'd');
+        mappings.insert('g', 'e');
 
         let decoder = Decoder { mappings };
         assert_eq!(5, decoder.decode("cdfeb"));

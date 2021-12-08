@@ -64,4 +64,9 @@ mod tests {
     fn test_part2() {
         assert_eq!(61229, part2("test_input.txt"));
     }
+
+    #[test]
+    fn final_part2() {
+        assert_eq!(1009098, part2("input.txt"));
+    }
 }
