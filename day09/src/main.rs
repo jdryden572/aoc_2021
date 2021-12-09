@@ -5,14 +5,14 @@ fn main() {
     println!("Answer two: {}", part2("input.txt"));
 }
 
-fn part1(file_name: &str) -> u32 {
+fn part1(file_name: &str) -> u16 {
     let values = parse_values(file_name);
 
     let matrix = Matrix::new(values);
     matrix
         .low_points()
         .into_iter()
-        .map(|Position { val, .. }| val + 1)
+        .map(|Position { val, .. }| (val + 1) as u16)
         .sum()
 }
 
@@ -39,11 +39,11 @@ fn part2(file_name: &str) -> usize {
     basins.into_iter().take(3).map(|b| b.len()).product()
 }
 
-fn parse_values(file_name: &str) -> Vec<Vec<u32>> {
+fn parse_values(file_name: &str) -> Vec<Vec<u8>> {
     helpers::read_lines_panicky(file_name)
         .map(|l| {
             l.chars()
-                .map(|c| c.to_digit(10).unwrap())
+                .map(|c| c.to_digit(10).unwrap() as u8)
                 .collect::<Vec<_>>()
         })
         .collect::<Vec<_>>()
@@ -56,7 +56,7 @@ struct Matrix {
 }
 
 impl Matrix {
-    fn new(values: Vec<Vec<u32>>) -> Self {
+    fn new(values: Vec<Vec<u8>>) -> Self {
         let max_x = values[0].len() - 1;
         let max_y = values.len() - 1;
         let mut positions = vec![Vec::new(); max_y + 1];
@@ -116,7 +116,7 @@ impl Matrix {
 struct Position {
     x: usize,
     y: usize,
-    val: u32,
+    val: u8,
 }
 
 #[cfg(test)]
