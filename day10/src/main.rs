@@ -15,17 +15,19 @@ fn part2(file_name: &str) -> usize {
         .map(get_completion_string_score)
         .collect::<Vec<_>>();
 
+        
+    // the prompt promises that there will be an odd number of lines, so this will pick the middle score.
     scores.sort();
     scores[scores.len() / 2]
 }
 
 fn get_completion_string_score(line: String) -> usize {
-    let mut stack = Vec::new();
+    let mut opening_chars = Vec::new();
     for c in line.chars() {
         match c {
-            '(' | '[' | '{' | '<' => stack.push(c),
+            '(' | '[' | '{' | '<' => opening_chars.push(c),
             ')' | ']' | '}' | '>' => {
-                if !tag_pair_matches(stack.pop().unwrap(), c) {
+                if !tag_pair_matches(opening_chars.pop().unwrap(), c) {
                     panic!("This line shouldn't have illegal closings")
                 }
             }
@@ -33,12 +35,12 @@ fn get_completion_string_score(line: String) -> usize {
         }
     }
 
-    let completion_seq = stack.into_iter().rev().map(get_matching_close);
-    get_completion_score(completion_seq)
-}
-
-fn get_completion_score<I: Iterator<Item = char>>(completion: I) -> usize {
-    completion.map(get_completion_char_score).fold(0, |acc,  score| acc * 5 + score)
+    opening_chars
+        .into_iter()
+        .rev()
+        .map(get_matching_close)
+        .map(get_completion_char_score)
+        .fold(0, |total,  score| total * 5 + score)
 }
 
 fn get_completion_char_score(close: char) -> usize {
