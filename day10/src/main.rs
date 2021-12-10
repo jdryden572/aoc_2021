@@ -15,82 +15,108 @@ fn part2(file_name: &str) -> usize {
         .map(get_completion_string_score)
         .collect::<Vec<_>>();
 
-        
     // the prompt promises that there will be an odd number of lines, so this will pick the middle score.
     scores.sort();
     scores[scores.len() / 2]
 }
 
 fn get_completion_string_score(line: String) -> usize {
-    let mut opening_chars = Vec::new();
-    for c in line.chars() {
-        match c {
-            '(' | '[' | '{' | '<' => opening_chars.push(c),
-            ')' | ']' | '}' | '>' => {
-                if !tag_pair_matches(opening_chars.pop().unwrap(), c) {
-                    panic!("This line shouldn't have illegal closings")
-                }
-            }
-            _ => panic!("Unrecognized char"),
+    let mut opening_tags = Vec::new();
+    for tag in line.chars().map(Tag::from) {
+        match tag {
+            Tag::Open(_) => opening_tags.push(tag),
+            Tag::Close(_) => { opening_tags.pop().unwrap(); }
         }
     }
 
-    opening_chars
-        .into_iter()
+    opening_tags
+        .iter()
         .rev()
-        .map(get_matching_close)
-        .map(get_completion_char_score)
-        .fold(0, |total,  score| total * 5 + score)
+        .map(Tag::get_matching_close)
+        .map(completion_char_score)
+        .fold(0, |total, score| total * 5 + score)
 }
 
-fn get_completion_char_score(close: char) -> usize {
-    [')', ']', '}', '>'].iter().position(|&c| c == close).unwrap() + 1
-}
-
-fn get_matching_close(open: char) -> char {
-    match open {
-        '(' => ')',
-        '[' => ']',
-        '{' => '}',
-        '<' => '>',
-        _ => panic!("Unrecognized open char"),
-    }
+fn completion_char_score(tag: Tag) -> usize {
+    [')', ']', '}', '>']
+        .iter()
+        .position(|&c| c == tag.into_inner())
+        .unwrap()
+        + 1
 }
 
 fn get_illegal_closing_score(line: &str) -> u32 {
     let mut stack = Vec::new();
-    for c in line.chars() {
-        match c {
-            '(' | '[' | '{' | '<' => stack.push(c),
-            ')' | ']' | '}' | '>' => {
-                if !tag_pair_matches(stack.pop().unwrap(), c) {
-                    return tag_score(c);
+    for tag in line.chars().map(Tag::from) {
+        match tag {
+            Tag::Open(_) => stack.push(tag),
+            Tag::Close(_) => {
+                if !stack.pop().unwrap().matches(&tag) {
+                    return tag.illegal_close_score();
                 }
             }
-            _ => panic!("Unrecognized char"),
         }
     }
 
     0
 }
 
-fn tag_pair_matches(open: char, close: char) -> bool {
-    match (open, close) {
-        ('(', ')') => true,
-        ('[', ']') => true,
-        ('{', '}') => true,
-        ('<', '>') => true,
-        _ => false,
+#[derive(PartialEq, Eq)]
+enum Tag {
+    Open(char),
+    Close(char),
+}
+
+impl Tag {
+    fn matches(&self, other: &Tag) -> bool {
+        match (self, other) {
+            (Tag::Open(_), Tag::Close(_)) => other == &self.get_matching_close(),
+            (Tag::Close(_), Tag::Open(_)) => self == &other.get_matching_close(),
+            _ => false
+        }
+    }
+
+    fn get_matching_close(&self) -> Tag {
+        match self {
+            Tag::Close(_) => panic!("Don't do that!"),
+            Tag::Open(open) => match *open {
+                '(' => ')'.into(),
+                '[' => ']'.into(),
+                '{' => '}'.into(),
+                '<' => '>'.into(),
+                _ => panic!("Unrecognized open char"),
+            }
+        }
+    }
+
+    fn illegal_close_score(&self) -> u32 {
+        match self {
+            Tag::Open(_) => 0,
+            Tag::Close(close) => match *close {
+                ')' => 3,
+                ']' => 57,
+                '}' => 1197,
+                '>' => 25137,
+                _ => 0,
+            }
+        }
+    }
+
+    fn into_inner(&self) -> char {
+        match self {
+            Tag::Open(c) => *c,
+            Tag::Close(c) => *c,
+        }
     }
 }
 
-fn tag_score(close: char) -> u32 {
-    match close {
-        ')' => 3,
-        ']' => 57,
-        '}' => 1197,
-        '>' => 25137,
-        _ => 0,
+impl From<char> for Tag {
+    fn from(c: char) -> Self {
+        match c {
+            '(' | '[' | '{' | '<' => Tag::Open(c),
+            ')' | ']' | '}' | '>' => Tag::Close(c),
+            _ => panic!("Unrecognized char"),
+        }
     }
 }
 
