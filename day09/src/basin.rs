@@ -11,13 +11,13 @@ pub fn part1(file_name: &str) -> u16 {
         .sum()
 }
 
-fn fill_basin_recursive(matrix: &Matrix, pos: &Position, basin: &mut HashSet<Position>) {
-    if basin.insert(*pos) {
-        for neighbor in matrix.neighbors(pos).into_iter().filter(|p| p.val < 9) {
-            fill_basin_recursive(matrix, &neighbor, basin)
-        }
-    }
-}
+// fn fill_basin_recursive(matrix: &Matrix, pos: &Position, basin: &mut HashSet<Position>) {
+//     if basin.insert(*pos) {
+//         for neighbor in matrix.neighbors(pos).into_iter().filter(|p| p.val < 9) {
+//             fill_basin_recursive(matrix, &neighbor, basin)
+//         }
+//     }
+// }
 
 pub fn part2(file_name: &str) -> usize {
     let values = parse_values(file_name);
@@ -53,30 +53,33 @@ pub fn parse_values(file_name: &str) -> Vec<Vec<u8>> {
 
 pub struct BasinSearcher {
     low_point: Position,
-    visited: HashSet<Position>,
-    pub frontier: Vec<Position>,
+    visited: HashSet<(usize, usize)>,
+    pub frontier: Vec<(usize, usize)>,
 }
 
 impl BasinSearcher {
     pub fn new(low_point: Position, matrix: &Matrix) -> Self {
         Self {
             low_point,
-            visited: HashSet::from_iter([low_point]),
-            frontier: Vec::from_iter(matrix.neighbors(&low_point).into_iter().filter(|p| p.kind != PositionType::HighPoint)),
+            visited: HashSet::from_iter([low_point.xy()]),
+            frontier: Vec::from_iter([low_point.xy()]),
         }
     }
 
     pub fn step(&mut self, matrix: &mut Matrix) {
-        if let Some(mut pos) = self.frontier.pop() {
-            if pos.kind != PositionType::LowPoint {
-                pos.kind = PositionType::InBasin;
-            }
-            if self.visited.insert(pos) {
+        if let Some((x, y)) = self.frontier.pop() {
+            let pos = {
+                let pos = matrix.position_mut(x, y);
                 if pos.kind != PositionType::LowPoint {
-                    matrix.position_mut(pos.x, pos.y).kind = PositionType::InBasin;
+                    pos.kind = PositionType::InBasin;
                 }
-                let neighbors_in_basin = matrix.neighbors(&pos).into_iter().filter(|p| p.kind != PositionType::HighPoint && !self.visited.contains(p)).collect::<Vec<_>>();
-                self.frontier.extend(neighbors_in_basin);
+                *pos
+            };
+            let neighbors_in_basin = matrix.neighbors(&pos).into_iter().filter(|p| p.kind != PositionType::HighPoint && !self.visited.contains(&p.xy())).map(|p| p.xy()).collect::<Vec<_>>();
+            for neighbor in neighbors_in_basin {
+                if self.visited.insert(neighbor) {
+                    self.frontier.push(neighbor);
+                }
             }
         }
     }
@@ -180,10 +183,9 @@ pub struct Position {
     pub kind: PositionType,
 }
 
-impl Hash for Position {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.x.hash(state);
-        self.y.hash(state);
+impl Position {
+    fn xy(&self) -> (usize, usize) {
+        (self.x, self.y)
     }
 }
 

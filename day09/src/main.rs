@@ -19,7 +19,8 @@ fn main() {
     let mut searchers = matrix.low_points().into_iter().map(|p| BasinSearcher::new(p, &matrix)).collect::<VecDeque<_>>();
     let mut finished = Vec::new();
 
-    render(&drawing_area, &mut matrix, &searchers, step);
+    draw_to(&drawing_area, &mut matrix, &searchers, step);
+    drawing_area.present().unwrap();
 
     while !searchers.is_empty() {
         let start = Instant::now();
@@ -36,12 +37,18 @@ fn main() {
         }
         let calc_done = Instant::now();
         print!("Calc[{:?}] ", calc_done - start);
-        render(&drawing_area, &mut &matrix, &searchers, step);
+        draw_to(&drawing_area, &mut &matrix, &searchers, step);
+        drawing_area.present().unwrap();
         println!("Render[{:?}]", Instant::now() - calc_done);
+    }
+
+    for _  in 0..20 {
+        // Pad last frame with 2 seconds
+        drawing_area.present().unwrap();
     }
 }
 
-fn render(drawing_area: &DrawingArea<BitMapBackend, Shift>, matrix: &Matrix, searchers: &VecDeque<BasinSearcher>, step: i32) {
+fn draw_to(drawing_area: &DrawingArea<BitMapBackend, Shift>, matrix: &Matrix, searchers: &VecDeque<BasinSearcher>, step: i32) {
     drawing_area.fill(&WHITE).unwrap();
 
     let mut ctx = ChartBuilder::on(&drawing_area)
@@ -56,7 +63,6 @@ fn render(drawing_area: &DrawingArea<BitMapBackend, Shift>, matrix: &Matrix, sea
     let text = format!("{}", step);
     let style = TextStyle::from(("sans-serif", 20).into_font()).color(&RED);
     drawing_area.draw_text(&text, &style, (0, 0)).unwrap();
-    drawing_area.present().unwrap();
 }
 
 fn rect_for(pos: &Position) -> Rectangle<(f64, f64)> {
@@ -73,8 +79,8 @@ fn rect_for(pos: &Position) -> Rectangle<(f64, f64)> {
 
 fn circle_for(searcher: &BasinSearcher) -> Option<Circle<(f64, f64), i32>> {
     let next = searcher.frontier.get(searcher.frontier.len() - 1);
-    next.map(|pos| {
-        let (x, y) = (pos.x as f64, pos.y as f64);
+    next.map(|(x, y)| {
+        let (x, y) = (*x as f64, *y as f64);
         Circle::new((x + 0.5, y + 0.5), 5, BLACK.mix(1.0).filled())
     })
 }
