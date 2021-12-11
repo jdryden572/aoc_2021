@@ -61,9 +61,9 @@ fn rect_for(pos: &Position) -> Rectangle<(f64, f64)> {
     //println!("{},{}", pos.x, pos.y);
     let (x, y) = (pos.x as f64, pos.y as f64);
     let color = match pos.kind {
-        PositionType::LowPoint => RED.mix(0.5).filled(),
-        PositionType::InBasin => YELLOW.mix(0.5).filled(),
-        PositionType::HighPoint => GREEN.mix(0.5).filled(),
+        PositionType::LowPoint => BLUE.mix(0.5).filled(),
+        PositionType::InBasin => GREEN.mix(0.5).filled(),
+        PositionType::HighPoint => BLACK.mix(0.5).filled(),
         PositionType::Unknown => WHITE.mix(1.0).filled(),
     };
     Rectangle::new([(x, y), (x + 1.0, y + 1.0)], color)
