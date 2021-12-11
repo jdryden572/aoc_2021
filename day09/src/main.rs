@@ -16,10 +16,11 @@ fn main() {
     let mut matrix = Matrix::new_with_low_points(values);
 
     let mut step = 0;
-    render(&drawing_area, &mut matrix, step);
-
     let mut searchers = matrix.low_points().into_iter().map(|p| BasinSearcher::new(p, &matrix)).collect::<VecDeque<_>>();
     let mut finished = Vec::new();
+
+    render(&drawing_area, &mut matrix, &searchers, step);
+
     while !searchers.is_empty() {
         let start = Instant::now();
         step += 1;
@@ -35,12 +36,12 @@ fn main() {
         }
         let calc_done = Instant::now();
         print!("Calc[{:?}] ", calc_done - start);
-        render(&drawing_area, &mut &matrix, step);
+        render(&drawing_area, &mut &matrix, &searchers, step);
         println!("Render[{:?}]", Instant::now() - calc_done);
     }
 }
 
-fn render(drawing_area: &DrawingArea<BitMapBackend, Shift>, matrix: &Matrix, step: i32) {
+fn render(drawing_area: &DrawingArea<BitMapBackend, Shift>, matrix: &Matrix, searchers: &VecDeque<BasinSearcher>, step: i32) {
     drawing_area.fill(&WHITE).unwrap();
 
     let mut ctx = ChartBuilder::on(&drawing_area)
@@ -48,6 +49,7 @@ fn render(drawing_area: &DrawingArea<BitMapBackend, Shift>, matrix: &Matrix, ste
         .unwrap();
 
     ctx.draw_series(matrix.iter().map(rect_for)).unwrap();
+    ctx.draw_series(searchers.iter().filter_map(circle_for)).unwrap();
 
     ctx.configure_mesh().draw().unwrap();
 
@@ -67,4 +69,12 @@ fn rect_for(pos: &Position) -> Rectangle<(f64, f64)> {
         PositionType::Unknown => WHITE.mix(1.0).filled(),
     };
     Rectangle::new([(x, y), (x + 1.0, y + 1.0)], color)
+}
+
+fn circle_for(searcher: &BasinSearcher) -> Option<Circle<(f64, f64), i32>> {
+    let next = searcher.frontier.get(searcher.frontier.len() - 1);
+    next.map(|pos| {
+        let (x, y) = (pos.x as f64, pos.y as f64);
+        Circle::new((x + 0.5, y + 0.5), 5, BLACK.mix(1.0).filled())
+    })
 }

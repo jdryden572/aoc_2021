@@ -54,7 +54,7 @@ pub fn parse_values(file_name: &str) -> Vec<Vec<u8>> {
 pub struct BasinSearcher {
     low_point: Position,
     visited: HashSet<Position>,
-    frontier: Vec<Position>,
+    pub frontier: Vec<Position>,
 }
 
 impl BasinSearcher {
