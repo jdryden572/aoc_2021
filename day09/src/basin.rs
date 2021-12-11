@@ -23,7 +23,7 @@ pub fn part2(file_name: &str) -> usize {
     let values = parse_values(file_name);
     let mut matrix = Matrix::new_with_low_points(values);
 
-    let mut searchers = matrix.low_points().into_iter().map(BasinSearcher::new).collect::<VecDeque<_>>();
+    let mut searchers = matrix.low_points().into_iter().map(|p| BasinSearcher::new(p, &matrix)).collect::<VecDeque<_>>();
     let mut finished = Vec::new();
     while !searchers.is_empty() {
         for _ in 0..searchers.len() {
@@ -58,11 +58,11 @@ pub struct BasinSearcher {
 }
 
 impl BasinSearcher {
-    pub fn new(low_point: Position) -> Self {
+    pub fn new(low_point: Position, matrix: &Matrix) -> Self {
         Self {
             low_point,
-            visited: HashSet::new(),
-            frontier: Vec::from_iter([low_point]),
+            visited: HashSet::from_iter([low_point]),
+            frontier: Vec::from_iter(matrix.neighbors(&low_point).into_iter().filter(|p| p.kind != PositionType::HighPoint)),
         }
     }
 
@@ -75,7 +75,7 @@ impl BasinSearcher {
                 if pos.kind != PositionType::LowPoint {
                     matrix.position_mut(pos.x, pos.y).kind = PositionType::InBasin;
                 }
-                let neighbors_in_basin = matrix.neighbors(&pos).into_iter().filter(|p| p.kind != PositionType::HighPoint);
+                let neighbors_in_basin = matrix.neighbors(&pos).into_iter().filter(|p| p.kind != PositionType::HighPoint && !self.visited.contains(p)).collect::<Vec<_>>();
                 self.frontier.extend(neighbors_in_basin);
             }
         }

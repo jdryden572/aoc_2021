@@ -18,7 +18,7 @@ fn main() {
     let mut step = 0;
     render(&drawing_area, &mut matrix, step);
 
-    let mut searchers = matrix.low_points().into_iter().map(BasinSearcher::new).collect::<VecDeque<_>>();
+    let mut searchers = matrix.low_points().into_iter().map(|p| BasinSearcher::new(p, &matrix)).collect::<VecDeque<_>>();
     let mut finished = Vec::new();
     while !searchers.is_empty() {
         let start = Instant::now();
