@@ -1,4 +1,8 @@
-use std::{iter::FromIterator, collections::{HashSet, VecDeque}, fmt::Display};
+use std::{
+    collections::{HashSet, VecDeque},
+    fmt::Display,
+    iter::FromIterator,
+};
 
 fn main() {
     println!("Answer one: {}", part1("input.txt"));
@@ -8,9 +12,12 @@ fn main() {
 const GRID_SIZE: usize = 10;
 
 fn part1(file_name: &str) -> usize {
-    let vals = helpers::read_lines_panicky(file_name)
-        .flat_map(|l| l.chars().map(|c| c.to_digit(10).unwrap() as usize).collect::<Vec<_>>());
-    
+    let vals = helpers::read_lines_panicky(file_name).flat_map(|l| {
+        l.chars()
+            .map(|c| c.to_digit(10).unwrap() as usize)
+            .collect::<Vec<_>>()
+    });
+
     let mut matrix = Matrix::from_iter(vals);
     //println!("{}", matrix);
 
@@ -45,7 +52,7 @@ fn part1(file_name: &str) -> usize {
 
         flash_count += flashes.len();
 
-        for pos in matrix.positions.iter_mut() { 
+        for pos in matrix.positions.iter_mut() {
             if pos.val > 9 {
                 pos.val = 0;
             }
@@ -58,9 +65,12 @@ fn part1(file_name: &str) -> usize {
 }
 
 fn part2(file_name: &str) -> usize {
-    let vals = helpers::read_lines_panicky(file_name)
-        .flat_map(|l| l.chars().map(|c| c.to_digit(10).unwrap() as usize).collect::<Vec<_>>());
-    
+    let vals = helpers::read_lines_panicky(file_name).flat_map(|l| {
+        l.chars()
+            .map(|c| c.to_digit(10).unwrap() as usize)
+            .collect::<Vec<_>>()
+    });
+
     let mut matrix = Matrix::from_iter(vals);
     //println!("{}", matrix);
 
@@ -95,7 +105,7 @@ fn part2(file_name: &str) -> usize {
             return i;
         }
 
-        for pos in matrix.positions.iter_mut() { 
+        for pos in matrix.positions.iter_mut() {
             if pos.val > 9 {
                 pos.val = 0;
             }
@@ -103,7 +113,7 @@ fn part2(file_name: &str) -> usize {
 
         //println!("{}", matrix);
     }
-    
+
     panic!("Too many loops!")
 }
 
@@ -120,14 +130,14 @@ impl Matrix {
     fn neighbors(&self, x: usize, y: usize) -> Vec<(usize, usize)> {
         let (x, y) = (x as i32, y as i32);
         [
-            (x-1, y-1),
-            (x, y-1),
-            (x+1, y-1),
-            (x-1, y),
-            (x+1, y),
-            (x-1, y+1),
-            (x, y+1),
-            (x+1, y+1),
+            (x - 1, y - 1),
+            (x, y - 1),
+            (x + 1, y - 1),
+            (x - 1, y),
+            (x + 1, y),
+            (x - 1, y + 1),
+            (x, y + 1),
+            (x + 1, y + 1),
         ]
         .iter()
         .filter(|(x, y)| *x >= 0 && *x < GRID_SIZE as i32 && *y >= 0 && *y < GRID_SIZE as i32)
@@ -158,7 +168,11 @@ impl FromIterator<usize> for Matrix {
             .into_iter()
             .enumerate()
             .map(|(i, val)| (i, val))
-            .map(|(i, val)| Position { x: i % GRID_SIZE, y: i / GRID_SIZE, val})
+            .map(|(i, val)| Position {
+                x: i % GRID_SIZE,
+                y: i / GRID_SIZE,
+                val,
+            })
             .collect::<Vec<_>>();
 
         Self { positions }
