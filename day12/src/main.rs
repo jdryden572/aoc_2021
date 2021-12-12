@@ -1,6 +1,6 @@
 use std::{
     collections::{HashMap, VecDeque},
-    time::Instant,
+    time::Instant, iter::FromIterator,
 };
 
 fn main() {
@@ -16,6 +16,13 @@ fn main() {
     println!(
         "Answer two: {} (elapsed: {:?})",
         part2(input),
+        Instant::now() - start
+    );
+
+    let start = Instant::now();
+    println!(
+        "Without recursion: {} (elapsed: {:?})",
+        non_recursive(input),
         Instant::now() - start
     );
 }
@@ -44,6 +51,42 @@ fn part1(input: &str) -> usize {
             let mut path = clone_vec(&path);
             path.push(next);
             queue.push_back(path);
+        }
+    }
+
+    path_count
+}
+
+fn non_recursive(input: &str) -> usize {
+    let caves = parse_caves_graph(input);
+
+    let mut path_count = 0;
+    let mut queue = VecDeque::from_iter([Some(("start", false))]);
+    let mut current_path = Vec::new();
+    while let Some(opt) = queue.pop_front() {
+        if let Some((cave, mut seen_twice)) = opt {
+            if cave == "end" {
+                path_count += 1;
+                continue;
+            }
+    
+            if is_lowercase(cave) && current_path.contains(&cave) {
+                if seen_twice {
+                    continue;
+                }
+                seen_twice = true;
+            }
+    
+            let next_caves = &caves[cave];
+            if !next_caves.is_empty() {
+                current_path.push(cave);
+                queue.push_front(None);
+                for &next in caves[cave].iter() {
+                    queue.push_front(Some((next, seen_twice)));
+                }
+            }
+        } else {
+            current_path.pop();
         }
     }
 
@@ -167,5 +210,10 @@ mod tests {
     #[test]
     fn final_part2() {
         assert_eq!(92111, part2("CV-mk,gm-IK,sk-gm,ca-sk,sx-mk,gm-start,sx-ca,kt-sk,ca-VS,kt-ml,kt-ca,mk-IK,end-sx,end-sk,gy-sx,end-ca,ca-ml,gm-CV,sx-kt,start-CV,IK-start,CV-kt,ml-mk,ml-CV,ml-gm,ml-IK"));
+    }
+
+    #[test]
+    fn test_non_recursive_example1() {
+        assert_eq!(36, non_recursive("start-A,start-b,A-c,A-b,b-d,A-end,b-end"));
     }
 }
