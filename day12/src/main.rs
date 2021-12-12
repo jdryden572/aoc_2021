@@ -53,49 +53,38 @@ fn part1(input: &str) -> usize {
 fn part2(input: &str) -> usize {
     let caves = parse_caves_graph(input);
 
-    let mut path_count = 0;
-    let mut queue = caves["start"]
-        .iter()
-        .map(|&c| vec!["start", c])
-        .collect::<VecDeque<_>>();
+    let mut parts = Vec::new();
+    count_paths_recursive("start", false, &mut parts, &caves)
+}
 
-    while let Some(path) = queue.pop_back() {
-        let &cave = path.iter().last().unwrap();
-        if cave == "end" {
-            path_count += 1;
-            //println!("{}", path.join(","));
-            continue;
-        }
+fn count_paths_recursive<'a>(
+    current: &'a str,
+    mut seen_twice: bool,
+    parts: &mut Vec<&'a str>,
+    caves: &HashMap<&str, Vec<&'a str>>,
+) -> usize {
+    // inspiration from (read: basically stolen from) my AoC Rust hero: AxlLind
+    // https://github.com/AxlLind/AdventOfCode2021/blob/main/src/bin/12.rs
 
-        if is_lowercase(cave) {
-            let this_cave_count = path.iter().filter(|&&p| p == cave).count();
-            if this_cave_count > 2 {
-                continue;
-            }
-
-            if this_cave_count == 2 {
-                let mut lowercase_counts = HashMap::new();
-                for &lowercase in path.iter().filter(|&&p| is_lowercase(p)) {
-                    let entry = lowercase_counts.entry(lowercase).or_insert(0);
-                    *entry += 1;
-                }
-                if lowercase_counts
-                    .into_iter()
-                    .any(|(c, count)| count > 1 && c != cave)
-                {
-                    continue;
-                }
-            }
-        }
-
-        for &next in caves[cave].iter() {
-            let mut path = clone_vec(&path);
-            path.push(next);
-            queue.push_back(path);
-        }
+    if current == "end" {
+        return 1;
     }
 
-    path_count
+    if is_lowercase(current) && parts.contains(&current) {
+        if seen_twice {
+            return 0;
+        }
+        seen_twice = true;
+    }
+
+    parts.push(current);
+    let count = caves[current]
+        .iter()
+        .map(|&cave| count_paths_recursive(cave, seen_twice, parts, caves))
+        .sum();
+
+    parts.pop();
+    count
 }
 
 fn parse_caves_graph(input: &str) -> HashMap<&str, Vec<&str>> {
