@@ -1,6 +1,7 @@
 use std::{
     collections::{HashMap, VecDeque},
-    time::Instant, iter::FromIterator,
+    iter::FromIterator,
+    time::Instant,
 };
 
 fn main() {
@@ -61,32 +62,33 @@ fn non_recursive(input: &str) -> usize {
     let caves = parse_caves_graph(input);
 
     let mut path_count = 0;
-    let mut queue = VecDeque::from_iter([Some(("start", false))]);
-    let mut current_path = Vec::new();
-    while let Some(opt) = queue.pop_front() {
-        if let Some((cave, mut seen_twice)) = opt {
-            if cave == "end" {
-                path_count += 1;
+
+    let first_caves = caves["start"].iter().map(|&cave| (1, cave, false));
+    let mut stack = Vec::from_iter(first_caves);
+    let mut current_path = vec!["start"];
+    while let Some((depth, cave, mut seen_twice)) = stack.pop() {
+        if current_path.len() != depth {
+            current_path.truncate(depth);
+        }
+
+        if cave == "end" {
+            path_count += 1;
+            continue;
+        }
+
+        if is_lowercase(cave) && current_path.contains(&cave) {
+            if seen_twice {
                 continue;
             }
-    
-            if is_lowercase(cave) && current_path.contains(&cave) {
-                if seen_twice {
-                    continue;
-                }
-                seen_twice = true;
+            seen_twice = true;
+        }
+
+        let next_caves = &caves[cave];
+        if !next_caves.is_empty() {
+            current_path.push(cave);
+            for &next in caves[cave].iter() {
+                stack.push((depth + 1, next, seen_twice));
             }
-    
-            let next_caves = &caves[cave];
-            if !next_caves.is_empty() {
-                current_path.push(cave);
-                queue.push_front(None);
-                for &next in caves[cave].iter() {
-                    queue.push_front(Some((next, seen_twice)));
-                }
-            }
-        } else {
-            current_path.pop();
         }
     }
 
