@@ -3,15 +3,16 @@ use std::collections::HashMap;
 type Pair = (char, char);
 
 fn main() {
-    println!("Answer one: {}", part1("input.txt"));
+    println!("Answer one: {}", both_parts("input.txt", 10));
+    println!("Answer two: {}", both_parts("input.txt", 40));
 }
 
-fn part1(file_name: &str) -> usize {
+fn both_parts(file_name: &str, step_count: usize) -> usize {
     let pair_mappings = parse_pair_mappings(file_name);
     let mut pair_counts = parse_initial_pairs(file_name);
     let mut temp_pair_counts = HashMap::new();
 
-    for _ in 0..10 {
+    for _ in 0..step_count {
         for (pair, count) in pair_counts.iter() {
             for new_pair in get_new_pairs(pair, &pair_mappings) {
                 *temp_pair_counts.entry(new_pair).or_insert(0) += count;
@@ -84,11 +85,16 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(1588, part1("test_input.txt"));
+        assert_eq!(1588, both_parts("test_input.txt", 10));
     }
 
     #[test]
     fn final_part1() {
-        assert_eq!(3831, part1("input.txt"));
+        assert_eq!(3831, both_parts("input.txt", 10));
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(2188189693529, both_parts("test_input.txt", 40));
     }
 }
