@@ -9,36 +9,44 @@ fn main() {
 
 fn both_parts(file_name: &str, step_count: usize) -> usize {
     let pair_mappings = parse_pair_mappings(file_name);
+
     let mut pair_counts = parse_initial_pairs(file_name);
     let mut temp_pair_counts = HashMap::new();
 
     for _ in 0..step_count {
+        // for each pair, create two new pairs with the same count
         for (pair, count) in pair_counts.iter() {
             for new_pair in get_new_pairs(pair, &pair_mappings) {
                 *temp_pair_counts.entry(new_pair).or_insert(0) += count;
             }
         }
 
+        // clear the old pairings, the temp collection is now our main pairing counts
         pair_counts.clear();
         std::mem::swap(&mut pair_counts, &mut temp_pair_counts);
     }
 
+    // Count the occurrances of each character (since each pair has two chars)
     let mut char_counts = HashMap::new();
     for (c, count) in pair_counts.into_iter().flat_map(|((a, b), count)| [(a, count), (b, count)]) {
         *char_counts.entry(c).or_insert(0) += count;
     }
 
-    for entry in char_counts.values_mut() {
-        *entry = *entry / 2;
+    // Not counting the first and last chars, each char is a part of two pairs.
+    // Currently each char is counted once for each pair, so we are off by a 
+    // factor of two.
+    for count in char_counts.values_mut() {
+        *count = *count / 2;
     }
 
+    // This is the weird part. The first and last chars are only part of one
+    // pair, so we over-corrected for those chars. Add one extra count for them.
     for c in parse_first_last_chars(file_name) {
-        *char_counts.entry(c).or_insert(1) += 1;
+        *char_counts.get_mut(&c).unwrap() += 1;
     }
 
     let max = char_counts.values().max().unwrap();
     let min = char_counts.values().min().unwrap();
-
     max - min
 }
 
