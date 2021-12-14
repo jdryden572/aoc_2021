@@ -97,4 +97,9 @@ mod tests {
     fn test_part2() {
         assert_eq!(2188189693529, both_parts("test_input.txt", 40));
     }
+
+    #[test]
+    fn final_part2() {
+        assert_eq!(5725739914282, both_parts("input.txt", 40));
+    }
 }
