@@ -1,10 +1,13 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Instant};
 
 type Pair = (char, char);
 
 fn main() {
-    println!("Answer one: {}", both_parts("input.txt", 10));
-    println!("Answer two: {}", both_parts("input.txt", 40));
+    let start = Instant::now();
+    println!("Answer one: {} ({:?})", both_parts("input.txt", 10), Instant::now() - start);
+
+    let start = Instant::now();
+    println!("Answer two: {} ({:?})", both_parts("input.txt", 40), Instant::now() - start);
 }
 
 fn both_parts(file_name: &str, step_count: usize) -> usize {
@@ -26,24 +29,16 @@ fn both_parts(file_name: &str, step_count: usize) -> usize {
         std::mem::swap(&mut pair_counts, &mut temp_pair_counts);
     }
 
-    // Count the occurrances of each character (since each pair has two chars)
+    // Count the occurrances of each character by counting the first char in each pair.
     let mut char_counts = HashMap::new();
-    for (c, count) in pair_counts.into_iter().flat_map(|((a, b), count)| [(a, count), (b, count)]) {
+    for ((c, _), count) in pair_counts {
         *char_counts.entry(c).or_insert(0) += count;
     }
 
-    // Not counting the first and last chars, each char is a part of two pairs.
-    // Currently each char is counted once for each pair, so we are off by a 
-    // factor of two.
-    for count in char_counts.values_mut() {
-        *count = *count / 2;
-    }
-
-    // This is the weird part. The first and last chars are only part of one
-    // pair, so we over-corrected for those chars. Add one extra count for them.
-    for c in parse_first_last_chars(file_name) {
-        *char_counts.get_mut(&c).unwrap() += 1;
-    }
+    // Since we counted chars using the first char in each pair, we are missing
+    // one occurrance of the last char in the original string. Add it manually.
+    let last_char = parse_last_char(file_name);
+    *char_counts.get_mut(&last_char).unwrap() += 1;
 
     let max = char_counts.values().max().unwrap();
     let min = char_counts.values().min().unwrap();
@@ -79,12 +74,9 @@ fn parse_pair_mappings(file_name: &str) -> HashMap<Pair, char> {
     mappings
 }
 
-fn parse_first_last_chars(file_name: &str) -> [char; 2] {
+fn parse_last_char(file_name: &str) -> char {
     let line = helpers::read_lines_panicky(file_name).next().unwrap();
-    let mut chars = line.chars();
-    let first = chars.next().unwrap();
-    let last = chars.last().unwrap();
-    [first, last]
+    line.chars().last().unwrap()
 }
 
 #[cfg(test)]
