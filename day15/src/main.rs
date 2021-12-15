@@ -1,5 +1,6 @@
 use std::{
     collections::{BinaryHeap, HashMap},
+    process::Command,
     time::Instant,
 };
 
@@ -89,6 +90,20 @@ fn main() {
         plotter.draw_visited(&location_risks, &came_from,&frontier);
         plotter.present();
     }
+
+    println!("Calling ffmpeg to generate .mp4...");
+    Command::new("ffmpeg.exe")
+        .arg("-i")
+        .arg("images/animated.gif")
+        .arg("-movflags")
+        .arg("faststart")
+        .arg("-pix_fmt")
+        .arg("yuv420p")
+        .arg("-vf")
+        .arg("scale=trunc(iw/2)*2:trunc(ih/2)*2")
+        .arg("images/animated.mp4")
+        .output()
+        .unwrap();
 }
 
 struct Plotter<'a> {
