@@ -1,13 +1,18 @@
-use std::collections::{BinaryHeap, HashMap};
+use std::{collections::{BinaryHeap, HashMap}, time::Instant};
 
 fn main() {
-    println!("Answer one: {}", part1("input.txt"));
+    let start = Instant::now();
+    println!("Answer one: {} ({:?})", part1("input.txt"), Instant::now() - start);
+
+    let start = Instant::now();
+    println!("Answer two: {} ({:?})", part2("input.txt"), Instant::now() - start);
 }
 
 fn part1(file_name: &str) -> u32 {
     let matrix = parse_matrix(file_name);
     let max_y = matrix.len();
     let max_x = matrix[0].len();
+    let max_xy = (max_x, max_y);
 
     let start = PositionRisk { xy: (0, 0), risk: 0 };
     let end = (max_x - 1, max_y - 1);
@@ -29,7 +34,7 @@ fn part1(file_name: &str) -> u32 {
             continue;
         }
 
-        for next in neighbors(x, y, &matrix) {
+        for next in neighbors(x, y, max_xy) {
             let risk = current_risk + matrix[next.1][next.0];
             if !location_risks.contains_key(&next) || &risk < location_risks.get(&next).unwrap() {
                 * location_risks.entry(next).or_default() = risk;
@@ -41,16 +46,69 @@ fn part1(file_name: &str) -> u32 {
     least_risk
 }
 
+fn part2(file_name: &str) -> u32 {
+    let matrix = parse_matrix(file_name);
+    let max_y = matrix.len() * 5;
+    let max_x = matrix[0].len() * 5;
+    let max_xy = (max_x, max_y);
+
+    let start = PositionRisk { xy: (0, 0), risk: 0 };
+    let end = (max_x - 1, max_y - 1);
+
+    let mut frontier = BinaryHeap::from_iter([start]);
+    let mut location_risks: HashMap<(usize, usize), u32> = HashMap::new();
+    location_risks.insert((0, 0), 0);
+
+    let mut least_risk = u32::MAX;
+    
+    while let Some(PositionRisk { xy: (x, y), risk }) = frontier.pop() {
+        if (x, y) == end {
+            least_risk = risk;
+            break;
+        }
+        
+        let &current_risk = location_risks.get(&(x, y)).unwrap();
+        if risk > current_risk {
+            continue;
+        }
+
+        for next in neighbors(x, y, max_xy) {
+            let risk = current_risk + expanded_matrix_value(next.0, next.1, &matrix);
+            if !location_risks.contains_key(&next) || &risk < location_risks.get(&next).unwrap() {
+                * location_risks.entry(next).or_default() = risk;
+                frontier.push(PositionRisk { xy: next, risk });
+            }
+        }
+    }
+
+    least_risk
+}
+
+fn expanded_matrix_value(x: usize, y: usize, matrix: &Vec<Vec<u32>>) -> u32 {
+    let max_y = matrix.len();
+    let max_x = matrix[0].len();
+    let x_mod = x % max_x;
+    let y_mod = y % max_y;
+    let (grid_num_x, grid_num_y) = (x / max_x, y / max_y);
+    let add = grid_num_x + grid_num_y;
+    let result = matrix[y_mod][x_mod] + add as u32;
+    if result < 10 {
+        result
+    } else {
+        (result % 10) + 1
+    }
+}
+
 fn parse_matrix(file_name: &str) -> Vec<Vec<u32>> {
     helpers::read_lines_panicky(file_name)
         .map(|l| l.chars().map(|c| c.to_digit(10).unwrap()).collect())
         .collect()
 }
 
-fn neighbors(x: usize, y: usize, matrix: &Vec<Vec<u32>>) -> Vec<(usize, usize)> {
+fn neighbors(x: usize, y: usize, max_xy: (usize, usize)) -> Vec<(usize, usize)> {
     let (x, y) = (x as i32, y as i32);
-    let max_y = matrix.len() as i32;
-    let max_x = matrix[0].len() as i32;
+    let max_x = max_xy.0 as i32;
+    let max_y = max_xy.1 as i32;
 
     [
         (x - 1, y),
@@ -95,5 +153,28 @@ mod tests {
     #[test]
     fn final_part1() {
         assert_eq!(748, part1("input.txt"));
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(315, part2("test_input.txt"));
+    }
+
+    #[test]
+    fn final_part2() {
+        assert_eq!(3045, part2("input.txt"));
+    }
+
+    #[test]
+    fn test_grid_expand() {
+        let expected = helpers::read_lines_panicky("expanded_grid.txt").collect::<Vec<_>>();
+        let matrix = parse_matrix("test_input.txt");
+        for y in 0..50 {
+            let mut row = String::new();
+            for x in 0..50 {
+                row.push_str(&format!("{}", expanded_matrix_value(x, y, &matrix)));
+            }
+            assert_eq!(expected[y], row);
+        }
     }
 }
