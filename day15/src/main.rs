@@ -24,7 +24,10 @@ fn both_parts(file_name: &str, grid_multiplier: usize) -> u32 {
     let max_y = matrix.len() * grid_multiplier;
     let max_x = matrix[0].len() * grid_multiplier;
 
-    let start = PositionRisk { xy: (0, 0), risk: 0 };
+    let start = PositionRisk {
+        xy: (0, 0),
+        risk: 0,
+    };
     let end = (max_x - 1, max_y - 1);
 
     let mut frontier = BinaryHeap::from_iter([start]);
@@ -46,8 +49,9 @@ fn both_parts(file_name: &str, grid_multiplier: usize) -> u32 {
 
         for next in neighbors(x, y, (max_x, max_y)) {
             let risk = current_risk + expanded_matrix_value(next.0, next.1, &matrix);
-            if !location_risks.contains_key(&next) || &risk < location_risks.get(&next).unwrap() {
-                *location_risks.entry(next).or_default() = risk;
+            let entry = location_risks.entry(next).or_insert(u32::MAX);
+            if risk < *entry {
+                *entry = risk;
                 frontier.push(PositionRisk { xy: next, risk });
             }
         }
@@ -56,7 +60,7 @@ fn both_parts(file_name: &str, grid_multiplier: usize) -> u32 {
     least_risk
 }
 
-fn expanded_matrix_value(x: usize, y: usize, matrix: &Vec<Vec<u32>>) -> u32 {
+fn expanded_matrix_value(x: usize, y: usize, matrix: &[Vec<u32>]) -> u32 {
     let max_y = matrix.len();
     let max_x = matrix[0].len();
     let x_mod = x % max_x;
