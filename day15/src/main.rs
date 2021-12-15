@@ -62,12 +62,12 @@ fn main() {
             }
         }
 
-        if steps % 2000 == 0 {
+        if steps % 1000 == 0 {
             let start = Instant::now();
             print!("Step {} ", steps);
     
             plotter.draw_matrix();
-            plotter.draw_visited(&location_risks, &came_from, &frontier);
+            plotter.draw_visited(&came_from, &frontier);
             plotter.present();
     
             println!("{:?}", Instant::now() - start);
@@ -81,7 +81,7 @@ fn main() {
 
     for _ in 0..(3 * (1000 / frame_delay)) {
         plotter.draw_matrix();
-        plotter.draw_visited(&location_risks, &came_from, &frontier);
+        plotter.draw_visited(&came_from, &frontier);
         plotter.present();
     }
 
@@ -95,8 +95,6 @@ fn main() {
         .arg("yuv420p")
         .arg("-vf")
         .arg("scale=trunc(iw/2)*2:trunc(ih/2)*2")
-        .arg("-r")
-        .arg("60")
         .arg("images/animated.mp4")
         .output()
         .unwrap();
@@ -119,13 +117,7 @@ impl<'a> Plotter<'a> {
         }
     }
 
-    fn draw_visited<'b>(&self, visited: &HashMap<(usize,usize), u32>, came_from: &HashMap<(usize, usize), (usize, usize)>, frontier: &BinaryHeap<PositionRisk>) {
-        for (&(x, y), &risk) in visited.iter() {
-            self.drawing_area.draw_pixel((x as i32, y as i32), &WHITE).unwrap();
-            let mix = risk as f64 / 3049.0;
-            self.drawing_area.draw_pixel((x as i32, y as i32), &BLUE.mix(mix)).unwrap();
-        }
-
+    fn draw_visited<'b>(&self, came_from: &HashMap<(usize, usize), (usize, usize)>, frontier: &BinaryHeap<PositionRisk>) {
         for pos in frontier.iter() {
             let mut current = pos.xy;
             while let Some(&(x, y)) = came_from.get(&current) {
