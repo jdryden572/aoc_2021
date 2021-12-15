@@ -1,18 +1,28 @@
-use std::{collections::{BinaryHeap, HashMap}, time::Instant};
+use std::{
+    collections::{BinaryHeap, HashMap},
+    time::Instant,
+};
 
 fn main() {
     let start = Instant::now();
-    println!("Answer one: {} ({:?})", part1("input.txt"), Instant::now() - start);
+    println!(
+        "Answer one: {} ({:?})",
+        both_parts("input.txt", 1),
+        Instant::now() - start
+    );
 
     let start = Instant::now();
-    println!("Answer two: {} ({:?})", part2("input.txt"), Instant::now() - start);
+    println!(
+        "Answer two: {} ({:?})",
+        both_parts("input.txt", 5),
+        Instant::now() - start
+    );
 }
 
-fn part1(file_name: &str) -> u32 {
+fn both_parts(file_name: &str, grid_multiplier: usize) -> u32 {
     let matrix = parse_matrix(file_name);
-    let max_y = matrix.len();
-    let max_x = matrix[0].len();
-    let max_xy = (max_x, max_y);
+    let max_y = matrix.len() * grid_multiplier;
+    let max_x = matrix[0].len() * grid_multiplier;
 
     let start = PositionRisk { xy: (0, 0), risk: 0 };
     let end = (max_x - 1, max_y - 1);
@@ -22,60 +32,22 @@ fn part1(file_name: &str) -> u32 {
     location_risks.insert((0, 0), 0);
 
     let mut least_risk = u32::MAX;
-    
+
     while let Some(PositionRisk { xy: (x, y), risk }) = frontier.pop() {
         if (x, y) == end {
             least_risk = risk;
             break;
         }
-        
+
         let &current_risk = location_risks.get(&(x, y)).unwrap();
         if risk > current_risk {
             continue;
         }
 
-        for next in neighbors(x, y, max_xy) {
-            let risk = current_risk + matrix[next.1][next.0];
-            if !location_risks.contains_key(&next) || &risk < location_risks.get(&next).unwrap() {
-                * location_risks.entry(next).or_default() = risk;
-                frontier.push(PositionRisk { xy: next, risk });
-            }
-        }
-    }
-
-    least_risk
-}
-
-fn part2(file_name: &str) -> u32 {
-    let matrix = parse_matrix(file_name);
-    let max_y = matrix.len() * 5;
-    let max_x = matrix[0].len() * 5;
-    let max_xy = (max_x, max_y);
-
-    let start = PositionRisk { xy: (0, 0), risk: 0 };
-    let end = (max_x - 1, max_y - 1);
-
-    let mut frontier = BinaryHeap::from_iter([start]);
-    let mut location_risks: HashMap<(usize, usize), u32> = HashMap::new();
-    location_risks.insert((0, 0), 0);
-
-    let mut least_risk = u32::MAX;
-    
-    while let Some(PositionRisk { xy: (x, y), risk }) = frontier.pop() {
-        if (x, y) == end {
-            least_risk = risk;
-            break;
-        }
-        
-        let &current_risk = location_risks.get(&(x, y)).unwrap();
-        if risk > current_risk {
-            continue;
-        }
-
-        for next in neighbors(x, y, max_xy) {
+        for next in neighbors(x, y, (max_x, max_y)) {
             let risk = current_risk + expanded_matrix_value(next.0, next.1, &matrix);
             if !location_risks.contains_key(&next) || &risk < location_risks.get(&next).unwrap() {
-                * location_risks.entry(next).or_default() = risk;
+                *location_risks.entry(next).or_default() = risk;
                 frontier.push(PositionRisk { xy: next, risk });
             }
         }
@@ -110,16 +82,11 @@ fn neighbors(x: usize, y: usize, max_xy: (usize, usize)) -> Vec<(usize, usize)> 
     let max_x = max_xy.0 as i32;
     let max_y = max_xy.1 as i32;
 
-    [
-        (x - 1, y),
-        (x + 1, y),
-        (x, y - 1),
-        (x, y + 1),
-    ]
-    .iter()
-    .filter(|&&(x, y)| x >= 0 && x < max_x && y >= 0 && y < max_y)
-    .map(|&(x, y)| (x as usize, y as usize))
-    .collect()
+    [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
+        .iter()
+        .filter(|&&(x, y)| x >= 0 && x < max_x && y >= 0 && y < max_y)
+        .map(|&(x, y)| (x as usize, y as usize))
+        .collect()
 }
 
 #[derive(PartialEq, Eq)]
@@ -130,7 +97,9 @@ struct PositionRisk {
 
 impl Ord for PositionRisk {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        other.risk.cmp(&self.risk) // order by risk level first, flipped
+        other
+            .risk
+            .cmp(&self.risk) // order by risk level first, flipped (lowest first)
             .then_with(|| self.xy.cmp(&other.xy))
     }
 }
@@ -147,22 +116,22 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(40, part1("test_input.txt"));
+        assert_eq!(40, both_parts("test_input.txt", 1));
     }
 
     #[test]
     fn final_part1() {
-        assert_eq!(748, part1("input.txt"));
+        assert_eq!(748, both_parts("input.txt", 1));
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(315, part2("test_input.txt"));
+        assert_eq!(315, both_parts("test_input.txt", 5));
     }
 
     #[test]
     fn final_part2() {
-        assert_eq!(3045, part2("input.txt"));
+        assert_eq!(3045, both_parts("input.txt", 5));
     }
 
     #[test]
