@@ -4,34 +4,26 @@ use std::{
     time::Instant,
 };
 
-use plotters::{prelude::*, coord::{Shift, types::RangedCoordusize}};
+use plotters::{prelude::*, coord::Shift};
 
 fn main() {
+    let frame_delay = 40;
+
     let drawing_area = BitMapBackend::gif(
         "images/animated.gif", 
-        (1000, 1000), 
-        1_00  /* Each frame show 1s */
+        (500, 500), 
+        frame_delay,
     ).unwrap().into_drawing_area();
 
-    let grid_multiplier = 1;
+    let grid_multiplier = 5;
     let matrix = parse_matrix("input.txt");
     let max_y = matrix.len() * grid_multiplier;
     let max_x = matrix[0].len() * grid_multiplier;
 
-    let mut coords = Vec::new();
-    for x in 0..max_x {
-        for y in 0..max_y {
-            coords.push((x, y));
-        }
-    }
-    coords.pop();
-
     let plotter = Plotter {
         drawing_area,
         matrix: parse_matrix("input.txt"),
-        coords,
-        max_x,
-        max_y,
+        grid_multiplier,
     };
 
     plotter.draw_matrix();
@@ -70,7 +62,7 @@ fn main() {
             }
         }
 
-        if steps % 100 == 0 {
+        if steps % 2000 == 0 {
             let start = Instant::now();
             print!("Step {} ", steps);
     
@@ -85,9 +77,11 @@ fn main() {
     println!("Least risk: {}", least_risk);
     println!("Steps: {}", steps);
 
-    for _ in 0..30 {
+    frontier.push(PositionRisk { xy: end, risk: least_risk });
+
+    for _ in 0..(3 * (1000 / frame_delay)) {
         plotter.draw_matrix();
-        plotter.draw_visited(&location_risks, &came_from,&frontier);
+        plotter.draw_visited(&location_risks, &came_from, &frontier);
         plotter.present();
     }
 
@@ -101,6 +95,8 @@ fn main() {
         .arg("yuv420p")
         .arg("-vf")
         .arg("scale=trunc(iw/2)*2:trunc(ih/2)*2")
+        .arg("-r")
+        .arg("60")
         .arg("images/animated.mp4")
         .output()
         .unwrap();
@@ -109,53 +105,34 @@ fn main() {
 struct Plotter<'a> {
     drawing_area: DrawingArea<BitMapBackend<'a>, Shift>,
     matrix: Vec<Vec<u32>>,
-    coords: Vec<(usize,usize)>,
-    max_x: usize,
-    max_y: usize,
+    grid_multiplier: usize,
 }
 
 impl<'a> Plotter<'a> {
     fn draw_matrix(&self) {
         self.drawing_area.fill(&WHITE).unwrap();
-        let mut ctx = ChartBuilder::on(&self.drawing_area)
-            .build_cartesian_2d(0..self.max_x, 0..self.max_y)
-            .unwrap();
-
-        ctx.draw_series(self.coords.iter().map(|&(x, y)| {
-            let mix = self.matrix[y][x] as f64 / 20.0;
-            Rectangle::new([(x, y), (x + 1, y + 1)], BLACK.mix(mix).filled())
-        })).unwrap();
-
-        ctx.configure_mesh().draw().unwrap();
+        for x in 0..self.matrix.len() * self.grid_multiplier {
+            for y in 0..self.matrix.len() * self.grid_multiplier {
+                let mix = expanded_matrix_value(x, y, &self.matrix) as f64 / 20.0;
+                self.drawing_area.draw_pixel((x as i32, y as i32), &BLACK.mix(mix)).unwrap();
+            }
+        }
     }
 
     fn draw_visited<'b>(&self, visited: &HashMap<(usize,usize), u32>, came_from: &HashMap<(usize, usize), (usize, usize)>, frontier: &BinaryHeap<PositionRisk>) {
-        let mut ctx = ChartBuilder::on(&self.drawing_area)
-            .build_cartesian_2d(0..self.max_x, 0..self.max_y)
-            .unwrap();
-        ctx.draw_series(visited.iter().map(|(&(x, y), _)| {
-            Rectangle::new([(x, y), (x + 1, y + 1)], WHITE.mix(1.0).filled())
-        })).unwrap();
-        ctx.draw_series(visited.iter().map(|(&(x, y), &risk)| {
-            let mix = risk as f64 / 756.0;
-            Rectangle::new([(x, y), (x + 1, y + 1)], BLUE.mix(mix).filled())
-        })).unwrap();
+        for (&(x, y), &risk) in visited.iter() {
+            self.drawing_area.draw_pixel((x as i32, y as i32), &WHITE).unwrap();
+            let mix = risk as f64 / 3049.0;
+            self.drawing_area.draw_pixel((x as i32, y as i32), &BLUE.mix(mix)).unwrap();
+        }
 
-        let paths = frontier.iter()
-            .flat_map(|p| {
-                let mut start = p.xy;
-                let mut points = vec![start];
-                while let Some(&next) = came_from.get(&start) {
-                    points.push(next);
-                    start = next;
-                }
-                points
-            });
-        ctx.draw_series(paths.map(|(x, y)| {
-            Rectangle::new([(x, y), (x + 1, y + 1)], BLACK.mix(1.0).filled())
-        })).unwrap();
-
-        ctx.configure_mesh().draw().unwrap();
+        for pos in frontier.iter() {
+            let mut current = pos.xy;
+            while let Some(&(x, y)) = came_from.get(&current) {
+                self.drawing_area.draw_pixel((x as i32, y as i32), &BLACK).unwrap();
+                current = (x, y);
+            }
+        }
     }
 
     fn present(&self) {
