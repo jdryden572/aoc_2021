@@ -3,26 +3,38 @@ use std::{
     time::Instant,
 };
 
+use plotters::{prelude::*, coord::{Shift, types::RangedCoordusize}};
+
 fn main() {
-    let start = Instant::now();
-    println!(
-        "Answer one: {} ({:?})",
-        both_parts("input.txt", 1),
-        Instant::now() - start
-    );
+    let drawing_area = BitMapBackend::gif(
+        "images/animated.gif", 
+        (1000, 1000), 
+        1_00  /* Each frame show 1s */
+    ).unwrap().into_drawing_area();
 
-    let start = Instant::now();
-    println!(
-        "Answer two: {} ({:?})",
-        both_parts("input.txt", 5),
-        Instant::now() - start
-    );
-}
-
-fn both_parts(file_name: &str, grid_multiplier: usize) -> u32 {
-    let matrix = parse_matrix(file_name);
+    let grid_multiplier = 1;
+    let matrix = parse_matrix("input.txt");
     let max_y = matrix.len() * grid_multiplier;
     let max_x = matrix[0].len() * grid_multiplier;
+
+    let mut coords = Vec::new();
+    for x in 0..max_x {
+        for y in 0..max_y {
+            coords.push((x, y));
+        }
+    }
+    coords.pop();
+
+    let plotter = Plotter {
+        drawing_area,
+        matrix: parse_matrix("input.txt"),
+        coords,
+        max_x,
+        max_y,
+    };
+
+    plotter.draw_matrix();
+    plotter.present();
 
     let start = PositionRisk { xy: (0, 0), risk: 0 };
     let end = (max_x - 1, max_y - 1);
@@ -30,10 +42,14 @@ fn both_parts(file_name: &str, grid_multiplier: usize) -> u32 {
     let mut frontier = BinaryHeap::from_iter([start]);
     let mut location_risks: HashMap<(usize, usize), u32> = HashMap::new();
     location_risks.insert((0, 0), 0);
+    let mut came_from = HashMap::new();
 
     let mut least_risk = u32::MAX;
+    let mut steps = 0usize;
 
     while let Some(PositionRisk { xy: (x, y), risk }) = frontier.pop() {
+        steps += 1;
+
         if (x, y) == end {
             least_risk = risk;
             break;
@@ -49,10 +65,132 @@ fn both_parts(file_name: &str, grid_multiplier: usize) -> u32 {
             if !location_risks.contains_key(&next) || &risk < location_risks.get(&next).unwrap() {
                 *location_risks.entry(next).or_default() = risk;
                 frontier.push(PositionRisk { xy: next, risk });
+                *came_from.entry(next).or_default() = (x, y);
+            }
+        }
+
+        if steps % 100 == 0 {
+            let start = Instant::now();
+            print!("Step {} ", steps);
+    
+            plotter.draw_matrix();
+            plotter.draw_visited(&location_risks, &came_from, &frontier);
+            plotter.present();
+    
+            println!("{:?}", Instant::now() - start);
+        }
+    }
+
+    println!("Least risk: {}", least_risk);
+    println!("Steps: {}", steps);
+
+    for _ in 0..30 {
+        plotter.draw_matrix();
+        plotter.draw_visited(&location_risks, &came_from,&frontier);
+        plotter.present();
+    }
+}
+
+struct Plotter<'a> {
+    drawing_area: DrawingArea<BitMapBackend<'a>, Shift>,
+    matrix: Vec<Vec<u32>>,
+    coords: Vec<(usize,usize)>,
+    max_x: usize,
+    max_y: usize,
+}
+
+impl<'a> Plotter<'a> {
+    fn draw_matrix(&self) {
+        self.drawing_area.fill(&WHITE).unwrap();
+        let mut ctx = ChartBuilder::on(&self.drawing_area)
+            .build_cartesian_2d(0..self.max_x, 0..self.max_y)
+            .unwrap();
+
+        ctx.draw_series(self.coords.iter().map(|&(x, y)| {
+            let mix = self.matrix[y][x] as f64 / 20.0;
+            Rectangle::new([(x, y), (x + 1, y + 1)], BLACK.mix(mix).filled())
+        })).unwrap();
+
+        ctx.configure_mesh().draw().unwrap();
+    }
+
+    fn draw_visited<'b>(&self, visited: &HashMap<(usize,usize), u32>, came_from: &HashMap<(usize, usize), (usize, usize)>, frontier: &BinaryHeap<PositionRisk>) {
+        let mut ctx = ChartBuilder::on(&self.drawing_area)
+            .build_cartesian_2d(0..self.max_x, 0..self.max_y)
+            .unwrap();
+        ctx.draw_series(visited.iter().map(|(&(x, y), _)| {
+            Rectangle::new([(x, y), (x + 1, y + 1)], WHITE.mix(1.0).filled())
+        })).unwrap();
+        ctx.draw_series(visited.iter().map(|(&(x, y), &risk)| {
+            let mix = risk as f64 / 756.0;
+            Rectangle::new([(x, y), (x + 1, y + 1)], BLUE.mix(mix).filled())
+        })).unwrap();
+
+        let paths = frontier.iter()
+            .flat_map(|p| {
+                let mut start = p.xy;
+                let mut points = vec![start];
+                while let Some(&next) = came_from.get(&start) {
+                    points.push(next);
+                    start = next;
+                }
+                points
+            });
+        ctx.draw_series(paths.map(|(x, y)| {
+            Rectangle::new([(x, y), (x + 1, y + 1)], BLACK.mix(1.0).filled())
+        })).unwrap();
+
+        ctx.configure_mesh().draw().unwrap();
+    }
+
+    fn present(&self) {
+        self.drawing_area.present().unwrap();
+    }
+}
+
+fn both_parts(file_name: &str, grid_multiplier: usize) -> u32 {
+    let matrix = parse_matrix(file_name);
+    let max_y = matrix.len() * grid_multiplier;
+    let max_x = matrix[0].len() * grid_multiplier;
+
+    let start = PositionRisk { xy: (0, 0), risk: 0 };
+    let end = (max_x - 1, max_y - 1);
+
+    let mut frontier = BinaryHeap::from_iter([start]);
+    let mut location_risks: HashMap<(usize, usize), u32> = HashMap::new();
+    location_risks.insert((0, 0), 0);
+
+    let mut most_risk = 0;
+    let mut least_risk = u32::MAX;
+    let mut steps = 0usize;
+
+    while let Some(PositionRisk { xy: (x, y), risk }) = frontier.pop() {
+        steps += 1;
+
+        if (x, y) == end {
+            least_risk = risk;
+            break;
+        }
+
+        let &current_risk = location_risks.get(&(x, y)).unwrap();
+        if risk > current_risk {
+            continue;
+        }
+
+        for next in neighbors(x, y, (max_x, max_y)) {
+            let risk = current_risk + expanded_matrix_value(next.0, next.1, &matrix);
+            if risk > most_risk {
+                most_risk = risk;
+            }
+            if !location_risks.contains_key(&next) || &risk < location_risks.get(&next).unwrap() {
+                *location_risks.entry(next).or_default() = risk;
+                frontier.push(PositionRisk { xy: next, risk });
             }
         }
     }
 
+    println!("Steps: {}", steps);
+    println!("Most risk: {}", most_risk);
     least_risk
 }
 
