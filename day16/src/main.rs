@@ -4,13 +4,25 @@ const INPUT: &str = "E054831006016008CF01CED7CDB2D495A473336CF7B8C8318021C00FACF
 
 fn main() {
     let start = Instant::now();
-    println!("Answer one: {} ({:?})", part1(INPUT), Instant::now() - start);
+    println!(
+        "Answer one: {} ({:?})",
+        part1(INPUT),
+        Instant::now() - start
+    );
 
     let start = Instant::now();
-    println!("Answer two: {} ({:?})", part2(INPUT), Instant::now() - start);
+    println!(
+        "Answer two: {} ({:?})",
+        part2(INPUT),
+        Instant::now() - start
+    );
 
     let start = Instant::now();
-    println!("Answer two: {} ({:?})", part2_stack(INPUT), Instant::now() - start);
+    println!(
+        "Answer two: {} ({:?})",
+        part2_stack(INPUT),
+        Instant::now() - start
+    );
 }
 
 fn part1(input: &str) -> usize {
@@ -30,17 +42,15 @@ fn part2(input: &str) -> usize {
 fn perform_op(packet: &Packet) -> usize {
     match &packet.payload {
         Payload::Literal(num) => *num,
-        Payload::Operator(op, packets) => {
-            match op {
-                0 => packets.iter().map(perform_op).sum(),
-                1 => packets.iter().map(perform_op).product(),
-                2 => packets.iter().map(perform_op).min().unwrap(),
-                3 => packets.iter().map(perform_op).max().unwrap(),
-                5 => bool_to_num(perform_op(&packets[0]) > perform_op(&packets[1])),
-                6 => bool_to_num(perform_op(&packets[0]) < perform_op(&packets[1])),
-                7 => bool_to_num(perform_op(&packets[0]) == perform_op(&packets[1])),
-                _ => unreachable!(),
-            }
+        Payload::Operator(op, packets) => match op {
+            0 => packets.iter().map(perform_op).sum(),
+            1 => packets.iter().map(perform_op).product(),
+            2 => packets.iter().map(perform_op).min().unwrap(),
+            3 => packets.iter().map(perform_op).max().unwrap(),
+            5 => bool_to_num(perform_op(&packets[0]) > perform_op(&packets[1])),
+            6 => bool_to_num(perform_op(&packets[0]) < perform_op(&packets[1])),
+            7 => bool_to_num(perform_op(&packets[0]) == perform_op(&packets[1])),
+            _ => unreachable!(),
         },
     }
 }
@@ -48,7 +58,7 @@ fn perform_op(packet: &Packet) -> usize {
 fn part2_stack(input: &str) -> usize {
     let mut binary = Binary::from_hex(input);
     let packet = parse_packet(&mut binary);
-    
+
     // This was a "fun" exercise in rewriting recursion using a stack...
     let mut stack = vec![Recurs::FirstTime(&packet.payload)];
     let mut values = Vec::new();
@@ -59,7 +69,7 @@ fn part2_stack(input: &str) -> usize {
                     Payload::Literal(num) => {
                         //println!("Literal({})", *num);
                         values.push(*num)
-                    },
+                    }
                     Payload::Operator(_op, children) => {
                         //println!("Push {} [{}]", print_op(*_op), print_vals(&values));
                         let mut vals = Vec::new();
@@ -68,9 +78,9 @@ fn part2_stack(input: &str) -> usize {
                         for child in children.iter().rev() {
                             stack.push(Recurs::FirstTime(&child.payload));
                         }
-                    },
+                    }
                 };
-            },
+            }
             Recurs::Consolidate(payload, mut vals) => {
                 match payload {
                     Payload::Literal(_) => unreachable!(),
@@ -81,16 +91,16 @@ fn part2_stack(input: &str) -> usize {
                             1 => values.iter().product::<usize>(),
                             2 => values.iter().copied().min().unwrap(),
                             3 => values.iter().copied().max().unwrap(),
-                            5 => bool_to_num(values[0] >  values[1]),
-                            6 => bool_to_num(values[0] <  values[1]),
+                            5 => bool_to_num(values[0] > values[1]),
+                            6 => bool_to_num(values[0] < values[1]),
                             7 => bool_to_num(values[0] == values[1]),
                             _ => unreachable!(),
                         });
                         //println!("Reset values to [{}]", print_vals(&vals));
                         values = vals;
-                    },
+                    }
                 }
-            },
+            }
         }
     }
 
@@ -125,7 +135,9 @@ fn bool_to_num(b: bool) -> usize {
 fn sum_versions(packet: &Packet) -> usize {
     match &packet.payload {
         Payload::Literal(_) => packet.version,
-        Payload::Operator(_, packets) => packet.version + packets.iter().map(sum_versions).sum::<usize>(),
+        Payload::Operator(_, packets) => {
+            packet.version + packets.iter().map(sum_versions).sum::<usize>()
+        }
     }
 }
 
@@ -136,11 +148,11 @@ fn parse_packet(binary: &mut Binary) -> Packet {
         4 => {
             // println!("Literal (version {})", version);
             get_literal_payload(binary)
-        },
+        }
         i => {
             // println!("Operator (version {})", version);
             get_operator_payload(i, binary)
-        },
+        }
     };
     Packet { version, payload }
 }
@@ -151,8 +163,8 @@ fn get_literal_payload(binary: &mut Binary) -> Payload {
         let group = binary.take(5);
         let label = &group[0..1];
         bits.push_str(&group[1..5]);
-        if label == "0" { 
-            break; 
+        if label == "0" {
+            break;
         }
     }
     let num = parse_binary_num(&bits);
@@ -309,7 +321,10 @@ mod tests {
     fn test_parse_literal() {
         let mut binary = Binary::from_hex("D2FE28");
         assert_eq!(
-            Packet { version: 6, payload: Payload::Literal(2021) },
+            Packet {
+                version: 6,
+                payload: Payload::Literal(2021)
+            },
             parse_packet(&mut binary)
         );
     }
