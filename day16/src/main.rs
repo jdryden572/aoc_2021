@@ -32,8 +32,8 @@ fn perform_op(packet: &Packet) -> usize {
         Payload::Literal(num) => *num,
         Payload::Operator(op, packets) => {
             match op {
-                0 => packets.iter().map(perform_op).sum::<usize>(),
-                1 => packets.iter().map(perform_op).product::<usize>(),
+                0 => packets.iter().map(perform_op).sum(),
+                1 => packets.iter().map(perform_op).product(),
                 2 => packets.iter().map(perform_op).min().unwrap(),
                 3 => packets.iter().map(perform_op).max().unwrap(),
                 5 => bool_to_num(perform_op(&packets[0]) > perform_op(&packets[1])),
