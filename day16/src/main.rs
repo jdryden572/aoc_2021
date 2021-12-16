@@ -255,50 +255,43 @@ mod tests {
     }
 
     #[test]
-    fn test_part2_example1() {
-        // sum
+    fn test_part2_sum() {
         assert_eq!(3, part2("C200B40A82"));
     }
 
     #[test]
-    fn test_part2_example2() {
-        // product
+    fn test_part2_product() {
         assert_eq!(54, part2("04005AC33890"));
     }
 
     #[test]
-    fn test_part2_example3() {
-        // minimum
+    fn test_part2_minimum() {
         assert_eq!(7, part2("880086C3E88112"));
     }
 
     #[test]
-    fn test_part2_example4() {
-        // maximum
+    fn test_part2_maximum() {
         assert_eq!(9, part2("CE00C43D881120"));
     }
 
     #[test]
-    fn test_part2_example5() {
-        // less than
+    fn test_part2_less_than() {
         assert_eq!(1, part2("D8005AC2A8F0"));
     }
 
     #[test]
-    fn test_part2_example6() {
-        // greater than
+    fn test_part2_greater_than() {
         assert_eq!(0, part2("F600BC2D8F"));
     }
 
     #[test]
-    fn test_part2_example7() {
-        // equal to
+    fn test_part2_equal_to() {
         assert_eq!(0, part2("9C005AC2F8F0"));
     }
 
     #[test]
-    fn test_part2_example8() {
-        // compound (1 + 3 = 2 * 2)
+    fn test_part2_compund() {
+        // (1 + 3 = 2 * 2)
         assert_eq!(1, part2("9C0141080250320F1802104A08"));
     }
 
