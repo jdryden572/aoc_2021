@@ -8,6 +8,9 @@ fn main() {
 
     let start = Instant::now();
     println!("Answer two: {} ({:?})", part2(INPUT), Instant::now() - start);
+
+    let start = Instant::now();
+    println!("Answer two: {} ({:?})", part2_stack(INPUT), Instant::now() - start);
 }
 
 fn part1(input: &str) -> usize {
@@ -40,6 +43,76 @@ fn perform_op(packet: &Packet) -> usize {
             }
         },
     }
+}
+
+fn part2_stack(input: &str) -> usize {
+    let mut binary = Binary::from_hex(input);
+    let packet = parse_packet(&mut binary);
+    
+    // This was a "fun" exercise in rewriting recursion using a stack...
+    let mut stack = vec![Recurs::FirstTime(&packet.payload)];
+    let mut values = Vec::new();
+    while let Some(current) = stack.pop() {
+        match current {
+            Recurs::FirstTime(payload) => {
+                match payload {
+                    Payload::Literal(num) => {
+                        //println!("Literal({})", *num);
+                        values.push(*num)
+                    },
+                    Payload::Operator(_op, children) => {
+                        //println!("Push {} [{}]", print_op(*_op), print_vals(&values));
+                        let mut vals = Vec::new();
+                        std::mem::swap(&mut vals, &mut values);
+                        stack.push(Recurs::Consolidate(payload, vals));
+                        for child in children.iter().rev() {
+                            stack.push(Recurs::FirstTime(&child.payload));
+                        }
+                    },
+                };
+            },
+            Recurs::Consolidate(payload, mut vals) => {
+                match payload {
+                    Payload::Literal(_) => unreachable!(),
+                    Payload::Operator(op, _) => {
+                        //println!("Consolidate {} [{}]", print_op(*op), print_vals(&values));
+                        vals.push(match op {
+                            0 => values.iter().sum::<usize>(),
+                            1 => values.iter().product::<usize>(),
+                            2 => values.iter().copied().min().unwrap(),
+                            3 => values.iter().copied().max().unwrap(),
+                            5 => bool_to_num(values[0] >  values[1]),
+                            6 => bool_to_num(values[0] <  values[1]),
+                            7 => bool_to_num(values[0] == values[1]),
+                            _ => unreachable!(),
+                        });
+                        //println!("Reset values to [{}]", print_vals(&vals));
+                        values = vals;
+                    },
+                }
+            },
+        }
+    }
+
+    values[0]
+}
+
+// fn print_vals(values: &[usize]) -> String {
+//     values.into_iter().map(|v| format!("{}", v)).collect::<Vec<_>>().join(",")
+// }
+
+// fn print_op(op: usize) -> &'static str {
+//     match op {
+//         0 => "Sum",
+//         1 => "Product",
+//         7 => "EqualTo",
+//         _ => unreachable!()
+//     }
+// }
+
+enum Recurs<'a> {
+    FirstTime(&'a Payload),
+    Consolidate(&'a Payload, Vec<usize>),
 }
 
 fn bool_to_num(b: bool) -> usize {
@@ -232,6 +305,11 @@ mod tests {
     #[test]
     fn final_part2() {
         assert_eq!(1264857437203, part2(INPUT));
+    }
+
+    #[test]
+    fn final_part2_stack() {
+        assert_eq!(1264857437203, part2_stack(INPUT));
     }
 
     #[test]
