@@ -3,6 +3,7 @@ const INPUT: &str = "E054831006016008CF01CED7CDB2D495A473336CF7B8C8318021C00FACF
 
 fn main() {
     println!("Answer one: {}", part1(INPUT));
+    println!("Answer two: {}", part2(INPUT));
 }
 
 fn part1(input: &str) -> usize {
@@ -12,10 +13,41 @@ fn part1(input: &str) -> usize {
     sum_versions(&packet)
 }
 
+fn part2(input: &str) -> usize {
+    let mut binary = Binary::from_hex(input);
+    let packet = parse_packet(&mut binary);
+
+    perform_op(&packet)
+}
+
+fn perform_op(packet: &Packet) -> usize {
+    match &packet.payload {
+        Payload::Literal(num) => *num,
+        Payload::Operator(op, packets) => {
+            match op {
+                Operation::Sum => packets.iter().map(perform_op).sum::<usize>(),
+                Operation::Product => packets.iter().map(perform_op).product::<usize>(),
+                Operation::Minimum => packets.iter().map(perform_op).min().unwrap(),
+                Operation::Maximum => packets.iter().map(perform_op).max().unwrap(),
+                Operation::GreaterThan => bool_to_num(perform_op(&packets[0]) > perform_op(&packets[1])),
+                Operation::LessThan => bool_to_num(perform_op(&packets[0]) < perform_op(&packets[1])),
+                Operation::EqualTo => bool_to_num(perform_op(&packets[0]) == perform_op(&packets[1])),
+            }
+        },
+    }
+}
+
+fn bool_to_num(b: bool) -> usize {
+    match b {
+        true => 1,
+        false => 0,
+    }
+}
+
 fn sum_versions(packet: &Packet) -> usize {
     match &packet.payload {
         Payload::Literal(_) => packet.version,
-        Payload::Operator(packets) => packet.version + packets.iter().map(sum_versions).sum::<usize>(),
+        Payload::Operator(_, packets) => packet.version + packets.iter().map(sum_versions).sum::<usize>(),
     }
 }
 
@@ -24,12 +56,12 @@ fn parse_packet(binary: &mut Binary) -> Packet {
     let type_id = parse_binary_num(binary.take(3));
     let payload = match type_id {
         4 => {
-            println!("Literal (version {})", version);
+            // println!("Literal (version {})", version);
             get_literal_payload(binary)
         },
-        _ => {
-            println!("Operator (version {})", version);
-            get_operator_payload(binary)
+        i => {
+            // println!("Operator (version {})", version);
+            get_operator_payload(i, binary)
         },
     };
     Packet { version, payload }
@@ -49,26 +81,37 @@ fn get_literal_payload(binary: &mut Binary) -> Payload {
     Payload::Literal(num)
 }
 
-fn get_operator_payload(binary: &mut Binary) -> Payload {
+fn get_operator_payload(type_id: usize, binary: &mut Binary) -> Payload {
     let mut packets = Vec::new();
     let length_type = binary.take(1);
     if length_type == "0" {
         // length is in bits
         let length = parse_binary_num(binary.take(15));
-        println!("{} bits of sub-packets", length);
+        // println!("{} bits of sub-packets", length);
         let current_pos = binary.position;
         while binary.position < current_pos + length {
             packets.push(parse_packet(binary));
         }
     } else {
         let length = parse_binary_num(binary.take(11));
-        println!("{} sub-packets", length);
+        // println!("{} sub-packets", length);
         for _ in 0..length {
             packets.push(parse_packet(binary));
         }
     };
 
-    Payload::Operator(packets)
+    let op = match type_id {
+        0 => Operation::Sum,
+        1 => Operation::Product,
+        2 => Operation::Minimum,
+        3 => Operation::Maximum,
+        5 => Operation::GreaterThan,
+        6 => Operation::LessThan,
+        7 => Operation::EqualTo,
+        _ => unreachable!(),
+    };
+
+    Payload::Operator(op, packets)
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -80,7 +123,18 @@ struct Packet {
 #[derive(Debug, PartialEq, Eq)]
 enum Payload {
     Literal(usize),
-    Operator(Vec<Packet>),
+    Operator(Operation, Vec<Packet>),
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum Operation {
+    Sum,
+    Product,
+    Minimum,
+    Maximum,
+    GreaterThan,
+    LessThan,
+    EqualTo,
 }
 
 struct Binary {
@@ -142,6 +196,59 @@ mod tests {
     #[test]
     fn final_part1() {
         assert_eq!(875, part1(INPUT));
+    }
+
+    #[test]
+    fn test_part2_example1() {
+        // sum
+        assert_eq!(3, part2("C200B40A82"));
+    }
+
+    #[test]
+    fn test_part2_example2() {
+        // product
+        assert_eq!(54, part2("04005AC33890"));
+    }
+
+    #[test]
+    fn test_part2_example3() {
+        // minimum
+        assert_eq!(7, part2("880086C3E88112"));
+    }
+
+    #[test]
+    fn test_part2_example4() {
+        // maximum
+        assert_eq!(9, part2("CE00C43D881120"));
+    }
+
+    #[test]
+    fn test_part2_example5() {
+        // less than
+        assert_eq!(1, part2("D8005AC2A8F0"));
+    }
+
+    #[test]
+    fn test_part2_example6() {
+        // greater than
+        assert_eq!(0, part2("F600BC2D8F"));
+    }
+
+    #[test]
+    fn test_part2_example7() {
+        // eqaul to
+        assert_eq!(0, part2("9C005AC2F8F0"));
+    }
+
+    #[test]
+    fn test_part2_example8() {
+        // compound (1 + 3 = 2 * 2)
+        assert_eq!(1, part2("9C0141080250320F1802104A08"));
+    }
+
+    #[test]
+    fn final_part2() {
+        assert_eq!(1264857437203, part2(INPUT));
     }
 
     #[test]
