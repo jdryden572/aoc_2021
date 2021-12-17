@@ -27,7 +27,7 @@ fn main() {
 fn part1(target: &TargetArea) -> i32 {
     let mut max_y = i32::MIN;
     for x_vel in 1..68 {
-        for y_vel in 1..1000 {
+        for y_vel in 1..260 {
             if let Some(height) = get_height_if_hit(x_vel, y_vel, target) {
                 max_y = max(max_y, height);
             }
@@ -39,7 +39,7 @@ fn part1(target: &TargetArea) -> i32 {
 fn part2(target: &TargetArea) -> usize {
     let mut hits = 0;
     for x_vel in 1..68 {
-        for y_vel in -261..1000 {
+        for y_vel in -261..260 {
             if let Some(_) = get_height_if_hit(x_vel, y_vel, target) {
                 hits += 1;
             }
