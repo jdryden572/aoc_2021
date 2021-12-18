@@ -4,11 +4,13 @@ mod pair;
 mod parse;
 mod magnitude;
 mod explode;
+mod split;
 
 use pair::{Pair, Element};
 use parse::parse_pair;
 use magnitude::magnitude;
 use explode::explode;
+use split::split;
 
 fn main() {
     println!("Answer one: {}", part1("input.txt"));
@@ -51,12 +53,6 @@ fn reduce(mut pair: Pair) -> Pair {
     pair
 }
 
-
-
-fn split(pair: &mut Pair) -> bool {
-    todo!()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -64,6 +60,11 @@ mod tests {
     #[test]
     fn test_part1() {
         assert_eq!(4140, part1("test_input.txt"));
+    }
+
+    #[test]
+    fn final_part1() {
+        assert_eq!(4235, part1("input.txt"));
     }
 
     #[test]
