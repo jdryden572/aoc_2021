@@ -5,12 +5,11 @@ mod magnitude;
 mod pair;
 mod parse;
 mod split;
+mod adding;
 
-use explode::explode;
+use adding::add;
 use magnitude::magnitude;
-use pair::{Element, Pair};
 use parse::parse_pair;
-use split::split;
 
 fn main() {
     println!("Answer one: {}", part1("input.txt"));
@@ -25,7 +24,6 @@ fn part1(file_name: &str) -> usize {
     let mut current = pairs.pop_front().unwrap();
     while let Some(pair) = pairs.pop_front() {
         current = add(current, pair);
-        current = reduce(current);
     }
 
     magnitude(&current)
@@ -43,36 +41,12 @@ fn part2(file_name: &str) -> usize {
                 let first = &pairs[i];
                 let second = &pairs[j];
                 let added = add(first.clone(), second.clone());
-                let added = reduce(added);
                 max = std::cmp::max(max, magnitude(&added));
             }
         }
     }
 
     max
-}
-
-fn add(left: Pair, right: Pair) -> Pair {
-    Pair(
-        Element::Pair(Box::new(left)),
-        Element::Pair(Box::new(right)),
-    )
-}
-
-fn reduce(mut pair: Pair) -> Pair {
-    loop {
-        if explode(&mut pair) {
-            continue;
-        }
-
-        if split(&mut pair) {
-            continue;
-        }
-
-        // didn't do either, we're done
-        break;
-    }
-    pair
 }
 
 #[cfg(test)]
@@ -97,12 +71,5 @@ mod tests {
     #[test]
     fn final_part2() {
         assert_eq!(4659, part2("input.txt"));
-    }
-
-    #[test]
-    fn test_reduce() {
-        let pair = parse_pair("[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]");
-        let expected = "[[[[0,7],4],[[7,8],[6,0]]],[8,1]]";
-        assert_eq!(expected, &format!("{}", reduce(pair)));
     }
 }
