@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, time::Instant};
 
 mod explode;
 mod magnitude;
@@ -12,8 +12,19 @@ use magnitude::magnitude;
 use parse::parse_pair;
 
 fn main() {
-    println!("Answer one: {}", part1("input.txt"));
-    println!("Answer two: {}", part2("input.txt"));
+    let start = Instant::now();
+    println!(
+        "Answer one: {} ({:?})",
+        part1("input.txt"),
+        Instant::now() - start
+    );
+
+    let start = Instant::now();
+    println!(
+        "Answer two: {} ({:?})",
+        part2("input.txt"),
+        Instant::now() - start
+    );
 }
 
 fn part1(file_name: &str) -> usize {
