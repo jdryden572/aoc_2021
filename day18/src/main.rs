@@ -1,16 +1,36 @@
-use std::fmt::Display;
+use std::collections::VecDeque;
 
 mod pair;
 mod parse;
+mod magnitude;
+
 use pair::{Pair, Element};
 use parse::parse_pair;
+use magnitude::magnitude;
 
 fn main() {
     println!("Answer one: {}", part1("input.txt"));
 }
 
 fn part1(file_name: &str) -> usize {
-    todo!()
+    let mut pairs = helpers::read_lines_panicky(file_name)
+        .map(|l| parse_pair(&l))
+        .collect::<VecDeque<_>>();
+    
+    let mut current = pairs.pop_front().unwrap();
+    while let Some(pair) = pairs.pop_front() {
+        current = add(current, pair);
+        current = reduce(current);
+    }
+
+    magnitude(&current)
+}
+
+fn add(left: Pair, right: Pair) -> Pair {
+    Pair(
+        Element::Pair(Box::new(left)),
+        Element::Pair(Box::new(right)),
+    )
 }
 
 fn reduce(mut pair: Pair) -> Pair {
@@ -36,8 +56,6 @@ fn explode(pair: &mut Pair) -> bool {
 fn split(pair: &mut Pair) -> bool {
     todo!()
 }
-
-
 
 #[cfg(test)]
 mod tests {
