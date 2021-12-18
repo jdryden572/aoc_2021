@@ -20,8 +20,8 @@ fn parse_element(input: &str) -> Element {
 
 fn trim_outer_braces(input: &str) -> &str {
     assert_eq!("[", &input[0..1]);
-    assert_eq!("]", &input[input.len()-1..]);
-    &input[1..input.len()-1]
+    assert_eq!("]", &input[input.len() - 1..]);
+    &input[1..input.len() - 1]
 }
 
 fn split_at_comma(input: &str) -> (&str, &str) {
@@ -33,10 +33,10 @@ fn split_at_comma(input: &str) -> (&str, &str) {
             ',' => {
                 if depth == 0 {
                     let (a, b) = input.split_at(i);
-                    return (a, &b[1..])
+                    return (a, &b[1..]);
                 }
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 

@@ -1,15 +1,15 @@
 use std::collections::VecDeque;
 
+mod explode;
+mod magnitude;
 mod pair;
 mod parse;
-mod magnitude;
-mod explode;
 mod split;
 
-use pair::{Pair, Element};
-use parse::parse_pair;
-use magnitude::magnitude;
 use explode::explode;
+use magnitude::magnitude;
+use pair::{Element, Pair};
+use parse::parse_pair;
 use split::split;
 
 fn main() {
@@ -20,7 +20,7 @@ fn part1(file_name: &str) -> usize {
     let mut pairs = helpers::read_lines_panicky(file_name)
         .map(|l| parse_pair(&l))
         .collect::<VecDeque<_>>();
-    
+
     let mut current = pairs.pop_front().unwrap();
     while let Some(pair) = pairs.pop_front() {
         current = add(current, pair);

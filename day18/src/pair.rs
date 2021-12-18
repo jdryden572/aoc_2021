@@ -10,7 +10,7 @@ impl Display for Pair {
 
 pub enum Element {
     Number(usize),
-    Pair(Box<Pair>)
+    Pair(Box<Pair>),
 }
 
 impl Element {
