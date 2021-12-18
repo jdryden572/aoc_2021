@@ -14,6 +14,7 @@ use split::split;
 
 fn main() {
     println!("Answer one: {}", part1("input.txt"));
+    println!("Answer two: {}", part2("input.txt"));
 }
 
 fn part1(file_name: &str) -> usize {
@@ -28,6 +29,27 @@ fn part1(file_name: &str) -> usize {
     }
 
     magnitude(&current)
+}
+
+fn part2(file_name: &str) -> usize {
+    let pairs = helpers::read_lines_panicky(file_name)
+        .map(|l| parse_pair(&l))
+        .collect::<Vec<_>>();
+
+    let mut max = 0;
+    for i in 0..pairs.len() {
+        for j in 0..pairs.len() {
+            if j != i {
+                let first = &pairs[i];
+                let second = &pairs[j];
+                let added = add(first.clone(), second.clone());
+                let added = reduce(added);
+                max = std::cmp::max(max, magnitude(&added));
+            }
+        }
+    }
+
+    max
 }
 
 fn add(left: Pair, right: Pair) -> Pair {
@@ -65,6 +87,16 @@ mod tests {
     #[test]
     fn final_part1() {
         assert_eq!(4235, part1("input.txt"));
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(3993, part2("test_input.txt"));
+    }
+
+    #[test]
+    fn final_part2() {
+        assert_eq!(4659, part2("input.txt"));
     }
 
     #[test]

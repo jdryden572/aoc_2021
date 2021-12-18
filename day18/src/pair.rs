@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+#[derive(Clone)]
 pub struct Pair(pub Element, pub Element);
 
 impl Display for Pair {
@@ -8,6 +9,7 @@ impl Display for Pair {
     }
 }
 
+#[derive(Clone)]
 pub enum Element {
     Number(usize),
     Pair(Box<Pair>),
