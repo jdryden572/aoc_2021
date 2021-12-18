@@ -3,10 +3,12 @@ use std::collections::VecDeque;
 mod pair;
 mod parse;
 mod magnitude;
+mod explode;
 
 use pair::{Pair, Element};
 use parse::parse_pair;
 use magnitude::magnitude;
+use explode::explode;
 
 fn main() {
     println!("Answer one: {}", part1("input.txt"));
@@ -49,9 +51,7 @@ fn reduce(mut pair: Pair) -> Pair {
     pair
 }
 
-fn explode(pair: &mut Pair) -> bool {
-    todo!()
-}
+
 
 fn split(pair: &mut Pair) -> bool {
     todo!()

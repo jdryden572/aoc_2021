@@ -13,6 +13,15 @@ pub enum Element {
     Pair(Box<Pair>)
 }
 
+impl Element {
+    pub fn number(&self) -> Option<usize> {
+        match self {
+            Element::Number(num) => Some(*num),
+            Element::Pair(_) => None,
+        }
+    }
+}
+
 impl Display for Element {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         Ok(match self {
