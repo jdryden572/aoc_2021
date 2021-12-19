@@ -7,14 +7,18 @@ type Point = (i32, i32, i32);
 
 fn main() {
     let start = Instant::now();
-    println!("Answer one: {} ({:?})", part1("input.txt"), Instant::now() - start);
+    let (one, two) = both_parts("input.txt");
+    let elapsed = Instant::now() - start;
+    println!("Answer one: {} ({:?})", one, elapsed);
+    println!("Answer two: {} ({:?})", two, elapsed);
 }
 
-fn part1(file_name: &str) -> usize {
+fn both_parts(file_name: &str) -> (usize, usize) {
     let mut scanners = parse_scanners(file_name);
     let scanner_zero = scanners.pop_front().unwrap();
     
     let mut beacons = HashSet::<_>::from_iter(scanner_zero.points);
+    let mut scanner_distances = Vec::new();
 
     while let Some(scanner) = scanners.pop_front() {
         println!("Scanner {}", scanner.id);
@@ -28,6 +32,8 @@ fn part1(file_name: &str) -> usize {
             }
 
             if let Some((distance, _)) = distances.iter().find(|&(_, c)| c >= &12) {
+                scanner_distances.push(*distance);
+                println!("Distance from scanner 0: {},{},{}", distance.0, distance.1, distance.2);
                 println!("Found after {} rotations", i);
                 found = true;
                 beacons.extend(points.into_iter().map(|p| diff(p, *distance)));
@@ -39,7 +45,15 @@ fn part1(file_name: &str) -> usize {
          }
     }
 
-    beacons.len()
+    let mut max = 0;
+    for &distance in scanner_distances.iter() {
+        for &other in scanner_distances.iter() {
+            let manhattan = (distance.0 - other.0).abs() + (distance.1 - other.1).abs() + (distance.2 - other.2).abs();
+            max = std::cmp::max(max, manhattan);
+        }
+    }
+
+    (beacons.len(), max as usize)
 }
 
 fn diff(left: Point, right: Point) -> Point {
@@ -81,11 +95,21 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(79, part1("test_input.txt"));
+        assert_eq!(79, both_parts("test_input.txt").0);
     }
 
     #[test]
     fn final_part1() {
-        assert_eq!(472, part1("input.txt"));
+        assert_eq!(472, both_parts("input.txt").0);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(3621, both_parts("test_input.txt").1);
+    }
+
+    #[test]
+    fn final_part2() {
+        assert_eq!(12092, both_parts("input.txt").1);
     }
 }
