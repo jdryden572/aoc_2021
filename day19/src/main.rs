@@ -1,5 +1,8 @@
 mod rotate;
-use std::{time::Instant, collections::{VecDeque, HashSet, HashMap}};
+use std::{
+    collections::{HashMap, HashSet, VecDeque},
+    time::Instant,
+};
 
 use rotate::Rotate;
 
@@ -16,7 +19,7 @@ fn main() {
 fn both_parts(file_name: &str) -> (usize, usize) {
     let mut scanners = parse_scanners(file_name);
     let scanner_zero = scanners.pop_front().unwrap();
-    
+
     let mut beacons = HashSet::<_>::from_iter(scanner_zero.points);
     let mut scanner_distances = Vec::new();
 
@@ -33,22 +36,27 @@ fn both_parts(file_name: &str) -> (usize, usize) {
 
             if let Some((distance, _)) = distances.iter().find(|&(_, c)| c >= &12) {
                 scanner_distances.push(*distance);
-                println!("Distance from scanner 0: {},{},{}", distance.0, distance.1, distance.2);
+                println!(
+                    "Distance from scanner 0: {},{},{}",
+                    distance.0, distance.1, distance.2
+                );
                 println!("Found after {} rotations", i);
                 found = true;
                 beacons.extend(points.into_iter().map(|p| diff(p, *distance)));
                 break;
             }
         }
-         if !found {
-             scanners.push_back(scanner);
-         }
+        if !found {
+            scanners.push_back(scanner);
+        }
     }
 
     let mut max = 0;
     for &distance in scanner_distances.iter() {
         for &other in scanner_distances.iter() {
-            let manhattan = (distance.0 - other.0).abs() + (distance.1 - other.1).abs() + (distance.2 - other.2).abs();
+            let manhattan = (distance.0 - other.0).abs()
+                + (distance.1 - other.1).abs()
+                + (distance.2 - other.2).abs();
             max = std::cmp::max(max, manhattan);
         }
     }
@@ -57,11 +65,7 @@ fn both_parts(file_name: &str) -> (usize, usize) {
 }
 
 fn diff(left: Point, right: Point) -> Point {
-    (
-        left.0 - right.0,
-        left.1 - right.1,
-        left.2 - right.2,
-    )
+    (left.0 - right.0, left.1 - right.1, left.2 - right.2)
 }
 
 struct Scanner {
@@ -74,16 +78,24 @@ fn parse_scanners(file_name: &str) -> VecDeque<Scanner> {
     let mut scanners = VecDeque::new();
     for chunk in lines.split(|l| l.is_empty()) {
         let mut chunk = chunk.into_iter();
-        let id = chunk.next().unwrap().split_whitespace().nth(2).unwrap().parse().unwrap();
-        let points = chunk.map(|l| {
-            let mut coords = l.split(",");
-            (
-                coords.next().unwrap().parse::<i32>().unwrap(),
-                coords.next().unwrap().parse::<i32>().unwrap(),
-                coords.next().unwrap().parse::<i32>().unwrap(),
-            )
-        })
-        .collect::<Vec<_>>();
+        let id = chunk
+            .next()
+            .unwrap()
+            .split_whitespace()
+            .nth(2)
+            .unwrap()
+            .parse()
+            .unwrap();
+        let points = chunk
+            .map(|l| {
+                let mut coords = l.split(",");
+                (
+                    coords.next().unwrap().parse::<i32>().unwrap(),
+                    coords.next().unwrap().parse::<i32>().unwrap(),
+                    coords.next().unwrap().parse::<i32>().unwrap(),
+                )
+            })
+            .collect::<Vec<_>>();
         scanners.push_back(Scanner { id, points });
     }
     scanners

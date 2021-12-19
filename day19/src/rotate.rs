@@ -68,7 +68,7 @@ fn rotate(point: Point, n: i32) -> Point {
         21 => (-z, -x, y),
         22 => (-z, -y, -x),
         23 => (-z, x, -y),
-        
+
         _ => panic!("Oops!"),
     }
 }
