@@ -1,17 +1,32 @@
-use std::{time::Instant};
+use std::time::Instant;
 
 fn main() {
     let start = Instant::now();
-    println!("Answer one: {} ({:?})", part1("input.txt"), Instant::now() - start);
+    println!(
+        "Answer one: {} ({:?})",
+        both_parts(2, "input.txt"),
+        Instant::now() - start
+    );
+
+    let start = Instant::now();
+    println!(
+        "Answer two: {} ({:?})",
+        both_parts(50, "input.txt"),
+        Instant::now() - start
+    );
 }
 
-fn part1(file_name: &str) -> usize {
+fn both_parts(steps: usize, file_name: &str) -> usize {
     let (algo, mut image) = parse_input(file_name);
 
-    for step in 0..2 {
+    for step in 0..steps {
         let default = if algo[0] == 1 {
             // have to toggle the "infinite" part of the image every step
-            if step % 2 == 0 { 0 } else { 1 }
+            if step % 2 == 0 {
+                0
+            } else {
+                1
+            }
         } else {
             0
         };
@@ -39,7 +54,10 @@ fn part1(file_name: &str) -> usize {
         image = new_image;
     }
 
-    image.into_iter().map(|row| row.iter().filter(|&&b| b == 1).count()).sum()
+    image
+        .into_iter()
+        .map(|row| row.iter().filter(|&&b| b == 1).count())
+        .sum()
 }
 
 fn enhance_pixel(x: i32, y: i32, image: &[Vec<u8>], algo: &[u8], default: u8) -> u8 {
@@ -56,7 +74,7 @@ fn pixel_window_value(x: i32, y: i32, image: &[Vec<u8>], default: u8) -> usize {
     for j in -1..2 {
         let out_of_bounds = y + j < 0 || y + j >= max_y;
         for i in -1..2 {
-            let out_of_bounds = out_of_bounds || x + i  < 0 || x + i >= max_x;
+            let out_of_bounds = out_of_bounds || x + i < 0 || x + i >= max_x;
             let bit = if out_of_bounds {
                 default
             } else {
@@ -98,12 +116,22 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(35, part1("test_input.txt"));
+        assert_eq!(35, both_parts(2, "test_input.txt"));
     }
 
     #[test]
     fn final_part1() {
-        assert_eq!(5680, part1("input.txt"));
+        assert_eq!(5680, both_parts(2, "input.txt"));
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(3351, both_parts(50, "test_input.txt"));
+    }
+
+    #[test]
+    fn final_part2() {
+        assert_eq!(19766, both_parts(50, "input.txt"));
     }
 
     #[test]
