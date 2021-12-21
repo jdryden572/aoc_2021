@@ -1,4 +1,4 @@
-use std::{time::Instant, cmp::min, collections::HashMap};
+use std::{cmp::min, collections::HashMap, time::Instant};
 
 fn main() {
     let start = Instant::now();
@@ -47,24 +47,12 @@ fn move_pawn(start: usize, distance: usize) -> usize {
 }
 
 // Brain-computed potential outcomes of three sequential rolls
-const STEP_OUTCOMES: [(usize, usize); 7] = [
-    (3, 1),
-    (4, 3),
-    (5, 6),
-    (6, 7),
-    (7, 6),
-    (8, 3),
-    (9, 1),
-];
+const STEP_OUTCOMES: [(usize, usize); 7] = [(3, 1), (4, 3), (5, 6), (6, 7), (7, 6), (8, 3), (9, 1)];
 
 fn part2(pos1: usize, pos2: usize) -> usize {
     let mut states_before_player1: HashMap<GameState, usize> = HashMap::new();
     let mut states_before_player2: HashMap<GameState, usize> = HashMap::new();
-    let initial = GameState {
-        pos1: pos1 - 1,
-        pos2: pos2 - 1,
-        ..Default::default()
-    };
+    let initial = GameState::new(pos1 - 1, 0, pos2 - 1, 0);
     states_before_player1.insert(initial, 1usize);
 
     let mut player1_wins = 0;
@@ -87,7 +75,11 @@ fn part2(pos1: usize, pos2: usize) -> usize {
             }
         }
 
-        println!("After player 1: {} wins, {} game states", player1_wins, states_before_player2.len());
+        println!(
+            "After player 1: {} wins, {} game states",
+            player1_wins,
+            states_before_player2.len()
+        );
 
         for (state, universes) in states_before_player2.drain() {
             for (dist, num) in STEP_OUTCOMES {
@@ -103,7 +95,11 @@ fn part2(pos1: usize, pos2: usize) -> usize {
             }
         }
 
-        println!("After player 2: {} wins, {} game states", player2_wins, states_before_player1.len());
+        println!(
+            "After player 2: {} wins, {} game states",
+            player2_wins,
+            states_before_player1.len()
+        );
 
         if states_before_player1.is_empty() {
             break;
@@ -130,7 +126,7 @@ impl GameState {
             pos1,
             score1,
             pos2,
-            score2
+            score2,
         }
     }
 }
@@ -161,8 +157,8 @@ mod tests {
 
     #[test]
     fn test_move() {
-        assert_eq!(10, move_pawn(4, 1+2+3));
-        assert_eq!(3, move_pawn(8, 4+5+6));
-        assert_eq!(4, move_pawn(10, 7+8+9));
+        assert_eq!(10, move_pawn(4, 1 + 2 + 3));
+        assert_eq!(3, move_pawn(8, 4 + 5 + 6));
+        assert_eq!(4, move_pawn(10, 7 + 8 + 9));
     }
 }
