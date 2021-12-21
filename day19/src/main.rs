@@ -13,7 +13,7 @@ fn main() {
     let (one, two) = both_parts("input.txt");
     let elapsed = Instant::now() - start;
     println!("Answer one: {} ({:?})", one, elapsed);
-    println!("Answer two: {} ({:?})", two, elapsed);
+    //println!("Answer two: {} ({:?})", two, elapsed);
 }
 
 fn both_parts(file_name: &str) -> (usize, usize) {
@@ -22,25 +22,29 @@ fn both_parts(file_name: &str) -> (usize, usize) {
 
     let mut beacons = HashSet::<_>::from_iter(scanner_zero.points);
     let mut scanner_distances = Vec::new();
+    let mut rotations = HashSet::new();
+    let mut calculations = 0usize;
 
     while let Some(scanner) = scanners.pop_front() {
-        println!("Scanner {}", scanner.id);
+        //println!("Scanner {}", scanner.id);
         let mut found = false;
         for (i, points) in Rotate::new(&scanner.points).enumerate() {
             let mut distances: HashMap<Point, usize> = HashMap::new();
             for &point in points.iter() {
                 for &orig in beacons.iter() {
+                    calculations += 1;
                     *distances.entry(diff(point, orig)).or_default() += 1;
                 }
             }
 
             if let Some((distance, _)) = distances.iter().find(|&(_, c)| c >= &12) {
                 scanner_distances.push(*distance);
-                println!(
-                    "Distance from scanner 0: {},{},{}",
-                    distance.0, distance.1, distance.2
-                );
-                println!("Found after {} rotations", i);
+                // println!(
+                //     "Distance from scanner 0: {},{},{}",
+                //     distance.0, distance.1, distance.2
+                // );
+                rotations.insert(i);
+                //println!("Found after {} rotations", i);
                 found = true;
                 beacons.extend(points.into_iter().map(|p| diff(p, *distance)));
                 break;
@@ -50,6 +54,9 @@ fn both_parts(file_name: &str) -> (usize, usize) {
             scanners.push_back(scanner);
         }
     }
+
+    println!("Unique rotations: {}", rotations.len());
+    println!("Vector calculations: {}", calculations);
 
     let mut max = 0;
     for &distance in scanner_distances.iter() {
