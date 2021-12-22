@@ -1,5 +1,8 @@
-use itertools::Itertools;
-use std::{collections::HashSet, ops::RangeInclusive, time::Instant, cmp::{max, min}};
+use std::{
+    cmp::{max, min},
+    ops::RangeInclusive,
+    time::Instant,
+};
 
 fn main() {
     let start = Instant::now();
@@ -18,26 +21,11 @@ fn main() {
 }
 
 fn part1(file_name: &str) -> usize {
-    let commands = parse_inputs(file_name);
-
-    let mut cubes_on = HashSet::new();
-    for command in commands {
-        if command.cube().is_small() {
-            match command {
-                Command::On(cube) => {
-                    for point in cube.iter().cloned().multi_cartesian_product() {
-                        cubes_on.insert((point[0], point[1], point[2]));
-                    }
-                }
-                Command::Off(cube) => {
-                    for point in cube.iter().cloned().multi_cartesian_product() {
-                        cubes_on.remove(&(point[0], point[1], point[2]));
-                    }
-                }
-            }
-        }
-    }
-    cubes_on.len()
+    let commands = parse_inputs(file_name)
+        .into_iter()
+        .filter(|c| c.cube().is_small())
+        .collect::<Vec<_>>();
+    reboot_sequence(&commands)
 }
 
 fn part2(file_name: &str) -> usize {
@@ -45,7 +33,7 @@ fn part2(file_name: &str) -> usize {
     reboot_sequence(&commands)
 }
 
-fn reboot_sequence(commands: &[Command]) -> usize { 
+fn reboot_sequence(commands: &[Command]) -> usize {
     let mut changed = 0i64;
     for i in 0..commands.len() {
         changed += cubes_changed_by(i, commands);
@@ -76,10 +64,18 @@ fn cubes_changed_by(i: usize, commands: &[Command]) -> i64 {
 }
 
 fn find_overlaps(cuboid: &Cuboid, commands: &[Command]) -> Vec<Command> {
-    commands.iter().cloned().filter_map(|p| cuboid.overlaps(p.cube()).and_then(|c| Some(match p {
-        Command::On(_) => Command::On(c),
-        Command::Off(_) => Command::Off(c),
-    }))).collect()
+    commands
+        .iter()
+        .cloned()
+        .filter_map(|p| {
+            cuboid.overlaps(p.cube()).and_then(|c| {
+                Some(match p {
+                    Command::On(_) => Command::On(c),
+                    Command::Off(_) => Command::Off(c),
+                })
+            })
+        })
+        .collect()
 }
 
 fn parse_inputs(file_name: &str) -> Vec<Command> {
@@ -194,13 +190,19 @@ mod tests {
 
     #[test]
     fn test_part2_small() {
-        let commands = parse_inputs(r"D:\rust\aoc_2021\day22\test_input_small.txt").into_iter().filter(|c| c.cube().is_small()).collect::<Vec<_>>();
+        let commands = parse_inputs(r"D:\rust\aoc_2021\day22\test_input_small.txt")
+            .into_iter()
+            .filter(|c| c.cube().is_small())
+            .collect::<Vec<_>>();
         assert_eq!(39, reboot_sequence(&commands));
     }
 
     #[test]
     fn test_part2_large() {
-        let commands = parse_inputs("test_input_large.txt").into_iter().filter(|c| c.cube().is_small()).collect::<Vec<_>>();
+        let commands = parse_inputs("test_input_large.txt")
+            .into_iter()
+            .filter(|c| c.cube().is_small())
+            .collect::<Vec<_>>();
         assert_eq!(590784, reboot_sequence(&commands));
     }
 
