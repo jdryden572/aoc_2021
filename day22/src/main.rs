@@ -1,6 +1,5 @@
 use std::{
     cmp::{max, min},
-    ops::RangeInclusive,
     time::Instant,
 };
 
@@ -101,12 +100,12 @@ fn parse_ranges(input: &str) -> Cuboid {
     ])
 }
 
-fn parse_range(input: &str) -> RangeInclusive<i32> {
+fn parse_range(input: &str) -> (i32, i32) {
     let input = &input[2..];
     let (start, end) = input.split_once("..").unwrap();
     let start = start.parse().unwrap();
     let end = end.parse().unwrap();
-    start..=end
+    (start, end)
 }
 
 #[derive(Debug, Clone)]
@@ -125,22 +124,22 @@ impl Command {
 }
 
 #[derive(Debug, Clone)]
-struct Cuboid([RangeInclusive<i32>; 3]);
+struct Cuboid([(i32, i32); 3]);
 
 impl Cuboid {
-    fn iter(&self) -> impl Iterator<Item = &RangeInclusive<i32>> {
+    fn iter(&self) -> impl Iterator<Item = &(i32, i32)> {
         self.0.iter()
     }
 
     fn is_small(&self) -> bool {
-        self.iter().all(|r| r.start() >= &-50 && r.end() <= &50)
+        self.iter().all(|r| r.0 >= -50 && r.1 <= 50)
     }
 
     fn num_points(&self) -> usize {
         let c = &self.0;
-        let width = (c[0].end() - c[0].start() + 1) as usize;
-        let height = (c[1].end() - c[1].start() + 1) as usize;
-        let depth = (c[2].end() - c[2].start() + 1) as usize;
+        let width = (c[0].1 - c[0].0 + 1) as usize;
+        let height = (c[1].1 - c[1].0 + 1) as usize;
+        let depth = (c[2].1 - c[2].0 + 1) as usize;
         width * height * depth
     }
 
@@ -154,13 +153,13 @@ impl Cuboid {
     }
 }
 
-fn range_overlaps(a: &RangeInclusive<i32>, b: &RangeInclusive<i32>) -> Option<RangeInclusive<i32>> {
-    if a.start() > b.end() || a.end() < b.start() {
+fn range_overlaps(a: &(i32, i32), b: &(i32, i32)) -> Option<(i32, i32)> {
+    if a.0 > b.1 || a.1 < b.0 {
         None
     } else {
-        let &start = max(a.start(), b.start());
-        let &end = min(a.end(), b.end());
-        Some(start..=end)
+        let start = max(a.0, b.0);
+        let end = min(a.1, b.1);
+        Some((start, end))
     }
 }
 
