@@ -136,10 +136,9 @@ impl Cuboid {
     }
 
     fn num_points(&self) -> usize {
-        let c = &self.0;
-        let width = (c[0].1 - c[0].0 + 1) as usize;
-        let height = (c[1].1 - c[1].0 + 1) as usize;
-        let depth = (c[2].1 - c[2].0 + 1) as usize;
+        let width = length(&self.0[0]);
+        let height = length(&self.0[1]);
+        let depth = length(&self.0[2]);
         width * height * depth
     }
 
@@ -153,12 +152,18 @@ impl Cuboid {
     }
 }
 
+fn length(range: &(i32, i32)) -> usize {
+    (range.1 - range.0 + 1) as usize
+}
+
 fn range_overlaps(a: &(i32, i32), b: &(i32, i32)) -> Option<(i32, i32)> {
-    if a.0 > b.1 || a.1 < b.0 {
+    let &(a_start, a_end) = a;
+    let &(b_start, b_end) = b;
+    if a_start > b_end || a_end < b_start {
         None
     } else {
-        let start = max(a.0, b.0);
-        let end = min(a.1, b.1);
+        let start = max(a_start, b_start);
+        let end = min(a_end, b_end);
         Some((start, end))
     }
 }
